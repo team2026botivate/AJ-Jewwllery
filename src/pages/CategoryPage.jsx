@@ -164,10 +164,10 @@ const CategoryPage = () => {
                 <span>Back</span>
               </button>
               <div className="flex justify-center items-center w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg">
-                <span className="text-sm font-bold text-white">AJ</span>
+                <span className="text-sm font-bold text-white">AT</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">AJ Jeweller</h1>
+                <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
                 <p className="text-sm text-gray-500">
                   {decodedCategoryName} Collection
                 </p>
@@ -181,7 +181,10 @@ const CategoryPage = () => {
                   Welcome, {user?.name}
                 </span>
               </div>
-              <button className="p-2 text-gray-600 rounded-lg transition-colors hover:text-gray-900 hover:bg-gray-100">
+              <button
+                onClick={() => alert("Notifications feature coming soon!")}
+                className="p-2 text-gray-600 rounded-lg transition-colors hover:text-gray-900 hover:bg-gray-100"
+              >
                 <Bell className="w-5 h-5" />
               </button>
               <button

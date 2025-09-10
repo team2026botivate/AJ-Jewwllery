@@ -49,7 +49,8 @@ const UserDashboard = () => {
     addJewellery,
     updateJewellery,
     deleteJewellery,
-    getCategories
+    getCategories,
+    addBooking,
   } = useJewellery();
 
   const userBookings = [
@@ -109,10 +110,30 @@ const UserDashboard = () => {
 
   const users = [
     { id: "user1", name: "John Doe", password: "pass123", status: "active" },
-    { id: "user2", name: "Jane Smith", password: "pass456", status: "inactive" },
-    { id: "user3", name: "Mike Johnson", password: "pass789", status: "active" },
-    { id: "user4", name: "Sarah Wilson", password: "pass101", status: "active" },
-    { id: "user5", name: "David Brown", password: "pass202", status: "inactive" },
+    {
+      id: "user2",
+      name: "Jane Smith",
+      password: "pass456",
+      status: "inactive",
+    },
+    {
+      id: "user3",
+      name: "Mike Johnson",
+      password: "pass789",
+      status: "active",
+    },
+    {
+      id: "user4",
+      name: "Sarah Wilson",
+      password: "pass101",
+      status: "active",
+    },
+    {
+      id: "user5",
+      name: "David Brown",
+      password: "pass202",
+      status: "inactive",
+    },
   ];
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -274,6 +295,17 @@ const UserDashboard = () => {
     cart.reduce((total, item) => total + item.quantity, 0);
 
   const confirmOrder = () => {
+    // Store booking data for admin to see
+    cart.forEach(item => {
+      addBooking({
+        userName: user?.name || "Guest User",
+        category: item.category,
+        jewelleryName: item.name,
+        quantity: item.quantity,
+        userId: user?.id || "guest"
+      });
+    });
+
     alert(`Order confirmed! ${getCartItemCount()} items booked successfully.`);
     setCart([]);
   };
@@ -363,12 +395,12 @@ const UserDashboard = () => {
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="w-80 transition-all duration-300 bg-white shadow-xl border-r border-gray-200 flex flex-col">
+        <div className="flex flex-col w-80 bg-white border-r border-gray-200 shadow-xl transition-all duration-300">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-xl font-bold text-gray-900">AJ Jeweller</h1>
+                <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
                 <p className="text-sm text-gray-500">Dashboard</p>
               </div>
               <button
@@ -425,10 +457,10 @@ const UserDashboard = () => {
 
       {/* Sidebar Toggle Button (when sidebar is hidden) */}
       {!sidebarOpen && (
-        <div className="w-16 bg-white shadow-xl border-r border-gray-200 flex flex-col items-center py-4">
+        <div className="flex flex-col items-center py-4 w-16 bg-white border-r border-gray-200 shadow-xl">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg transition-colors hover:bg-gray-100 mb-4"
+            className="p-2 mb-4 rounded-lg transition-colors hover:bg-gray-100"
             title="Show Sidebar"
           >
             <ChevronRight className="w-5 h-5" />
@@ -466,7 +498,7 @@ const UserDashboard = () => {
           <div className="mt-auto">
             <button
               onClick={handleLogout}
-              className="w-12 h-12 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors"
+              className="flex justify-center items-center w-12 h-12 text-gray-600 rounded-xl transition-colors hover:text-gray-800 hover:bg-gray-100"
               title="Logout"
             >
               <LogOut className="w-5 h-5" />
@@ -569,14 +601,6 @@ const UserDashboard = () => {
                     <List className="w-4 h-4" />
                   </button>
                 </div>
-
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center px-6 py-2 space-x-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Add Jewellery</span>
-                </button>
               </div>
             )}
           </div>
@@ -647,29 +671,35 @@ const UserDashboard = () => {
                           </p>
 
                           <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-1">
+                            <div className="flex items-center p-1 space-x-2 bg-gray-50 rounded-lg">
                               <button
                                 onClick={() =>
                                   setBookingQuantities({
                                     ...bookingQuantities,
-                                    [item.id]: Math.max(1, (bookingQuantities[item.id] || 1) - 1)
+                                    [item.id]: Math.max(
+                                      1,
+                                      (bookingQuantities[item.id] || 1) - 1
+                                    ),
                                   })
                                 }
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-white rounded"
+                                className="flex justify-center items-center w-8 h-8 text-gray-600 rounded hover:text-gray-800 hover:bg-white"
                               >
                                 -
                               </button>
-                              <span className="w-8 text-center font-medium">
+                              <span className="w-8 font-medium text-center">
                                 {bookingQuantities[item.id] || 1}
                               </span>
                               <button
                                 onClick={() =>
                                   setBookingQuantities({
                                     ...bookingQuantities,
-                                    [item.id]: Math.min(item.quantity, (bookingQuantities[item.id] || 1) + 1)
+                                    [item.id]: Math.min(
+                                      item.quantity,
+                                      (bookingQuantities[item.id] || 1) + 1
+                                    ),
                                   })
                                 }
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-white rounded"
+                                className="flex justify-center items-center w-8 h-8 text-gray-600 rounded hover:text-gray-800 hover:bg-white"
                               >
                                 +
                               </button>
@@ -782,9 +812,6 @@ const UserDashboard = () => {
                     <p className="text-sm text-gray-600">
                       {getCartItemCount()} items
                     </p>
-                    <p className="text-2xl font-bold text-amber-600">
-                      ₹{getCartTotal().toLocaleString()}
-                    </p>
                   </div>
                 )}
               </div>
@@ -809,9 +836,6 @@ const UserDashboard = () => {
                           </h3>
                           <p className="mb-1 text-sm text-gray-600">
                             {item.category}
-                          </p>
-                          <p className="text-xl font-bold text-amber-600">
-                            ₹{item.price.toLocaleString()}
                           </p>
                         </div>
                         <div className="flex items-center space-x-4">
@@ -856,7 +880,7 @@ const UserDashboard = () => {
                     <div className="mb-6 space-y-3">
                       <div className="flex justify-between text-gray-600">
                         <span>Subtotal ({getCartItemCount()} items)</span>
-                        <span>₹{getCartTotal().toLocaleString()}</span>
+                        <span>Price not available</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Shipping</span>
@@ -865,7 +889,7 @@ const UserDashboard = () => {
                       <div className="flex justify-between pt-3 text-xl font-bold text-gray-900 border-t">
                         <span>Total</span>
                         <span className="text-amber-600">
-                          ₹{getCartTotal().toLocaleString()}
+                          Price not available
                         </span>
                       </div>
                     </div>
@@ -1021,7 +1045,6 @@ const UserDashboard = () => {
               )}
             </div>
           )}
-
         </main>
       </div>
 

@@ -37,7 +37,9 @@ const AdminDashboard = () => {
     addJewellery,
     updateJewellery,
     deleteJewellery,
-    getCategories
+    getCategories,
+    bookings,
+    addBooking,
   } = useJewellery();
 
   const [activeTab, setActiveTab] = useState("jewellery");
@@ -52,48 +54,32 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
 
-  // Mock data for bookings and users
-  const bookings = [
-    {
-      id: 1,
-      userName: "John Doe",
-      category: "Animals",
-      jewelleryName: "Lion Pendant",
-      quantity: 1,
-      bookingDate: "2024-01-15",
-    },
-    {
-      id: 2,
-      userName: "Jane Smith",
-      category: "Rings",
-      jewelleryName: "Diamond Ring",
-      quantity: 1,
-      bookingDate: "2024-01-16",
-    },
-    {
-      id: 3,
-      userName: "Mike Johnson",
-      category: "Earrings",
-      jewelleryName: "Gold Hoops",
-      quantity: 2,
-      bookingDate: "2024-01-17",
-    },
-    {
-      id: 4,
-      userName: "Sarah Wilson",
-      category: "Bracelets",
-      jewelleryName: "Silver Bangle Set",
-      quantity: 1,
-      bookingDate: "2024-01-18",
-    },
-  ];
-
   const users = [
     { id: "user1", name: "John Doe", password: "pass123", status: "active" },
-    { id: "user2", name: "Jane Smith", password: "pass456", status: "inactive" },
-    { id: "user3", name: "Mike Johnson", password: "pass789", status: "active" },
-    { id: "user4", name: "Sarah Wilson", password: "pass101", status: "active" },
-    { id: "user5", name: "David Brown", password: "pass202", status: "inactive" },
+    {
+      id: "user2",
+      name: "Jane Smith",
+      password: "pass456",
+      status: "inactive",
+    },
+    {
+      id: "user3",
+      name: "Mike Johnson",
+      password: "pass789",
+      status: "active",
+    },
+    {
+      id: "user4",
+      name: "Sarah Wilson",
+      password: "pass101",
+      status: "active",
+    },
+    {
+      id: "user5",
+      name: "David Brown",
+      password: "pass202",
+      status: "inactive",
+    },
   ];
 
   const [newJewellery, setNewJewellery] = useState({
@@ -237,7 +223,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             {sidebarOpen && (
               <div>
-                <h1 className="text-xl font-bold text-gray-900">AJ Jeweller</h1>
+                <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
                 <p className="text-sm text-gray-500">Admin Dashboard</p>
               </div>
             )}
@@ -734,7 +720,18 @@ const AdminDashboard = () => {
                             Password: {"•".repeat(u.password.length)}
                           </div>
                           <button
-                            onClick={() => console.log("Toggle user status")}
+                            onClick={() => {
+                              // Toggle user status functionality
+                              const updatedUsers = users.map(user =>
+                                user.id === u.id
+                                  ? { ...user, status: user.status === "active" ? "inactive" : "active" }
+                                  : user
+                              );
+                              // Here you would typically update the users state or call an API
+                              console.log("User status toggled for:", u.id, "New status:", u.status === "active" ? "inactive" : "active");
+                              // For now, just show an alert
+                              alert(`User ${u.name} status changed to ${u.status === "active" ? "inactive" : "active"}`);
+                            }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                               u.status === "active"
                                 ? "bg-red-100 text-red-800 hover:bg-red-200"

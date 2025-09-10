@@ -371,10 +371,27 @@ export const JewelleryProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : initialJewellery;
   });
 
-  // Save to localStorage whenever jewellery changes
+  const [bookings, setBookings] = useState(() => {
+    // Try to load from localStorage first, fallback to empty array
+    const saved = localStorage.getItem('bookings-data');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save bookings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('jewellery-data', JSON.stringify(jewellery));
-  }, [jewellery]);
+    localStorage.setItem('bookings-data', JSON.stringify(bookings));
+  }, [bookings]);
+
+  // Add new booking
+  const addBooking = (bookingData) => {
+    const booking = {
+      ...bookingData,
+      id: Date.now(), // Simple ID generation
+      bookingDate: new Date().toISOString(),
+      status: 'Confirmed'
+    };
+    setBookings(prev => [...prev, booking]);
+  };
 
   // Add new jewellery item
   const addJewellery = (newItem) => {
@@ -415,9 +432,11 @@ export const JewelleryProvider = ({ children }) => {
 
   const value = {
     jewellery,
+    bookings,
     addJewellery,
     updateJewellery,
     deleteJewellery,
+    addBooking,
     getJewelleryByCategory,
     getCategories,
   };
