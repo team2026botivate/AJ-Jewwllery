@@ -123,3 +123,29 @@ textarea:focus-visible {
 .smooth-scroll {
   scroll-behavior: smooth;
 }
+
+/* ✅ Inputs UI clean-up */
+/* Hide default clear/decoration icons in search inputs */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+/* Hide number input spin buttons */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/* ✅ Subtle fade-in animation helper (paired with Tailwind's animate-fade-in) */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}

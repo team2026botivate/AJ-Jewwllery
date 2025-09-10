@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
+
 const Login = () => {
   const { login } = useAuth();
   const [credentials, setCredentials] = useState({ id: "", password: "" });
@@ -30,8 +31,9 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center px-4 min-h-screen bg-gradient-to-tr from-amber-600 via-gray-900 to-black sm:px-6 lg:px-8">
-      <div className="p-4 w-full max-w-md rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/10 border-white/20 sm:p-6 lg:p-8">
+    <>
+      <div className="flex justify-center items-center px-4 min-h-screen bg-gradient-to-tr from-amber-600 via-gray-900 to-black sm:px-6 lg:px-8">
+        <div className="p-4 w-full max-w-md rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/10 border-white/20 sm:p-6 lg:p-8 animate-fade-in hover-lift">
         {/* Logo / Branding */}
         <div className="mb-4 text-center sm:mb-6 lg:mb-8">
           <div className="flex justify-center items-center mx-auto w-12 h-12 bg-amber-500 rounded-full shadow-lg sm:w-16 sm:h-16">
@@ -158,8 +160,10 @@ const Login = () => {
             </li>
           </ul>
         </div>
+        </div>
       </div>
-    </div>
+      
+    </>
   );
 };
 

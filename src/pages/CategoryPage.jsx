@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useJewellery } from "../context/JewelleryContext";
+import Footer from "../components/Footer";
 
 const CategoryPage = () => {
   const { user, logout } = useAuth();
@@ -213,11 +214,11 @@ const CategoryPage = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" />
               <input
-                type="text"
+                type="search"
                 placeholder="Search jewellery..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="py-3 pr-4 pl-10 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                className="py-3 pr-4 pl-10 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none"
               />
             </div>
 
@@ -267,7 +268,7 @@ const CategoryPage = () => {
         {/* Jewellery Grid */}
         {filteredJewellery.length > 0 ? (
           <div
-            className={`grid gap-6 mt-8 ${
+            className={`grid gap-6 mt-8 animate-fade-in ${
               viewMode === "grid"
                 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                 : "grid-cols-1"
@@ -276,7 +277,7 @@ const CategoryPage = () => {
             {filteredJewellery.map((item) => (
               <div
                 key={item.id}
-                className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden group ${
+                className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift group ${
                   viewMode === "list" ? "flex" : ""
                 }`}
               >
@@ -380,6 +381,7 @@ const CategoryPage = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

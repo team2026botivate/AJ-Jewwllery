@@ -42,6 +42,7 @@ import {
   Menu,
 } from "lucide-react";
 import { useJewellery } from "../context/JewelleryContext";
+import Footer from "../components/Footer";
 
 const UserDashboard = () => {
   const { user, logout } = useAuth();
@@ -310,13 +311,13 @@ const UserDashboard = () => {
 
   const confirmOrder = () => {
     // Store booking data for admin to see
-    cart.forEach(item => {
+    cart.forEach((item) => {
       addBooking({
         userName: user?.name || "Guest User",
         category: item.category,
         jewelleryName: item.name,
         quantity: item.quantity,
-        userId: user?.id || "guest"
+        userId: user?.id || "guest",
       });
     });
 
@@ -411,7 +412,7 @@ const UserDashboard = () => {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed z-50 p-2 bg-white rounded-lg shadow-lg left0-4 top- lg:hidden"
+          className="fixed top-0 left-1 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -564,8 +565,10 @@ const UserDashboard = () => {
                       onChange={(e) => {
                         setSelectedCategory(e.target.value);
                         if (
-                          (selectedCategory !== "All" && e.target.value === "All") ||
-                          (selectedCategory === "All" && e.target.value !== "All")
+                          (selectedCategory !== "All" &&
+                            e.target.value === "All") ||
+                          (selectedCategory === "All" &&
+                            e.target.value !== "All")
                         ) {
                           setCurrentPage(1);
                         }
@@ -684,7 +687,7 @@ const UserDashboard = () => {
               {paginatedItems.length > 0 ? (
                 <>
                   <div
-                    className={`grid gap-6 transition-all duration-300 ease-in-out hide-scrollbar ${
+                    className={`grid gap-6 transition-all duration-300 ease-in-out hide-scrollbar animate-fade-in ${
                       viewMode === "grid"
                         ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                         : "grid-cols-1"
@@ -698,7 +701,7 @@ const UserDashboard = () => {
                     {paginatedItems.map((item) => (
                       <div
                         key={item.id}
-                        className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden ${
+                        className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift ${
                           viewMode === "list" ? "flex" : ""
                         }`}
                       >
@@ -1106,6 +1109,7 @@ const UserDashboard = () => {
             </div>
           )}
         </main>
+        <Footer />
       </div>
 
       {/* Add/Edit Jewellery Modal */}

@@ -30,6 +30,7 @@ import {
   Shirt,
   Menu,
 } from "lucide-react";
+import Footer from "../components/Footer";
 
 const AdminDashboard = () => {
   const { logout } = useAuth();
@@ -89,9 +90,7 @@ const AdminDashboard = () => {
     category: "",
     name: "",
     description: "",
-    price: "",
     image: "",
-    quantity: 1,
   });
 
   const categories = [
@@ -167,16 +166,14 @@ const AdminDashboard = () => {
     if (newJewellery.category && newJewellery.name && newJewellery.image) {
       if (editingItem) {
         // Update existing item
-        updateJewellery(editingItem.id, {
-          ...newJewellery,
-          price: parseFloat(newJewellery.price) || 0,
-        });
+        updateJewellery(editingItem.id, newJewellery);
         alert("Product updated successfully!");
       } else {
         // Add new item
         addJewellery({
           ...newJewellery,
-          price: parseFloat(newJewellery.price) || 0,
+          price: 0,
+          quantity: 1,
         });
         alert("Product added successfully!");
       }
@@ -198,13 +195,14 @@ const AdminDashboard = () => {
       category: "",
       name: "",
       description: "",
-      price: "",
       image: "",
-      quantity: 1,
     });
     setImagePreview("");
     setShowAddModal(false);
     setEditingItem(null);
+    // Clear file input
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleEdit = (item) => {
@@ -213,11 +211,23 @@ const AdminDashboard = () => {
       category: item.category,
       name: item.name,
       description: item.description,
-      price: item.price.toString(),
       image: item.image,
-      quantity: item.quantity,
     });
+    setImagePreview(item.image);
     setShowAddModal(true);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        setNewJewellery({ ...newJewellery, image: imageUrl });
+        setImagePreview(imageUrl);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleLogout = () => {
@@ -332,8 +342,10 @@ const AdminDashboard = () => {
                       onChange={(e) => {
                         setSelectedCategory(e.target.value);
                         if (
-                          (selectedCategory !== "All" && e.target.value === "All") ||
-                          (selectedCategory === "All" && e.target.value !== "All")
+                          (selectedCategory !== "All" &&
+                            e.target.value === "All") ||
+                          (selectedCategory === "All" &&
+                            e.target.value !== "All")
                         ) {
                           setCurrentPage(1);
                         }
@@ -459,7 +471,7 @@ const AdminDashboard = () => {
               {paginatedItems.length > 0 ? (
                 <>
                   <div
-                    className={`grid gap-6 transition-all duration-300 ease-in-out hide-scrollbar ${
+                    className={`grid gap-6 transition-all duration-300 ease-in-out hide-scrollbar animate-fade-in ${
                       viewMode === "grid"
                         ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                         : "grid-cols-1"
@@ -516,12 +528,12 @@ const AdminDashboard = () => {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-8 space-x-2">
+                    <div className="flex justify-center items-center mt-12 space-x-1">
                       {/* First Button */}
                       <button
                         onClick={() => setCurrentPage(1)}
                         disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2 py-1 text-xs font-medium text-gray-700 bg-white rounded border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="First Page"
                       >
                         First
@@ -533,9 +545,9 @@ const AdminDashboard = () => {
                           setCurrentPage((prev) => Math.max(1, prev - 1))
                         }
                         disabled={currentPage === 1}
-                        className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        className="px-1 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-3 h-3" />
                       </button>
 
                       {/* Page Numbers */}
@@ -543,7 +555,7 @@ const AdminDashboard = () => {
                         <button
                           key={i + 1}
                           onClick={() => setCurrentPage(i + 1)}
-                          className={`px-4 py-2 rounded-lg ${
+                          className={`px-2 py-1 rounded text-xs ${
                             currentPage === i + 1
                               ? "bg-amber-500 text-white"
                               : "border border-gray-300 hover:bg-gray-50"
@@ -561,22 +573,23 @@ const AdminDashboard = () => {
                           )
                         }
                         disabled={currentPage === totalPages}
-                        className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        className="px-1 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3 h-3" />
                       </button>
 
                       {/* Last Button */}
                       <button
                         onClick={() => setCurrentPage(totalPages)}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2 py-1 text-xs font-medium text-gray-700 bg-white rounded border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Last Page"
                       >
                         Last
                       </button>
                     </div>
                   )}
+
                 </>
               ) : (
                 <div className="py-16 text-center">
@@ -684,16 +697,20 @@ const AdminDashboard = () => {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            {["Name", "ID", "Password", "Status", "Actions"].map(
-                              (h) => (
-                                <th
-                                  key={h}
-                                  className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                                >
-                                  {h}
-                                </th>
-                              )
-                            )}
+                            {[
+                              "Name",
+                              "ID",
+                              "Password",
+                              "Status",
+                              "Actions",
+                            ].map((h) => (
+                              <th
+                                key={h}
+                                className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
+                              >
+                                {h}
+                              </th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -721,7 +738,9 @@ const AdminDashboard = () => {
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-900">
                                 <button
-                                  onClick={() => console.log("Toggle user status")}
+                                  onClick={() =>
+                                    console.log("Toggle user status")
+                                  }
                                   className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
                                     u.status === "active"
                                       ? "bg-red-100 text-red-800 hover:bg-red-200"
@@ -752,9 +771,7 @@ const AdminDashboard = () => {
                             <h3 className="mb-1 text-lg font-semibold text-gray-900">
                               {u.name}
                             </h3>
-                            <p className="text-sm text-gray-600">
-                              ID: {u.id}
-                            </p>
+                            <p className="text-sm text-gray-600">ID: {u.id}</p>
                           </div>
                           <span
                             className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
@@ -774,15 +791,30 @@ const AdminDashboard = () => {
                           <button
                             onClick={() => {
                               // Toggle user status functionality
-                              const updatedUsers = users.map(user =>
+                              const updatedUsers = users.map((user) =>
                                 user.id === u.id
-                                  ? { ...user, status: user.status === "active" ? "inactive" : "active" }
+                                  ? {
+                                      ...user,
+                                      status:
+                                        user.status === "active"
+                                          ? "inactive"
+                                          : "active",
+                                    }
                                   : user
                               );
                               // Here you would typically update the users state or call an API
-                              console.log("User status toggled for:", u.id, "New status:", u.status === "active" ? "inactive" : "active");
+                              console.log(
+                                "User status toggled for:",
+                                u.id,
+                                "New status:",
+                                u.status === "active" ? "inactive" : "active"
+                              );
                               // For now, just show an alert
-                              alert(`User ${u.name} status changed to ${u.status === "active" ? "inactive" : "active"}`);
+                              alert(
+                                `User ${u.name} status changed to ${
+                                  u.status === "active" ? "inactive" : "active"
+                                }`
+                              );
                             }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                               u.status === "active"
@@ -790,9 +822,7 @@ const AdminDashboard = () => {
                                 : "bg-green-100 text-green-800 hover:bg-green-200"
                             }`}
                           >
-                            {u.status === "active"
-                              ? "Deactivate"
-                              : "Activate"}
+                            {u.status === "active" ? "Deactivate" : "Activate"}
                           </button>
                         </div>
                       </div>
@@ -803,6 +833,7 @@ const AdminDashboard = () => {
             </div>
           )}
         </main>
+        <Footer />
       </div>
 
       {/* Add/Edit Jewellery Modal */}
@@ -864,46 +895,6 @@ const AdminDashboard = () => {
                     required
                   />
                 </div>
-
-                {/* Price */}
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Price (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={newJewellery.price}
-                    onChange={(e) =>
-                      setNewJewellery({
-                        ...newJewellery,
-                        price: e.target.value,
-                      })
-                    }
-                    min="0"
-                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                    required
-                  />
-                </div>
-
-                {/* Quantity */}
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    value={newJewellery.quantity}
-                    onChange={(e) =>
-                      setNewJewellery({
-                        ...newJewellery,
-                        quantity: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    min="1"
-                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                    required
-                  />
-                </div>
               </div>
 
               {/* Description */}
@@ -925,19 +916,16 @@ const AdminDashboard = () => {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Photo Upload */}
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Image URL
+                  Upload Photo
                 </label>
                 <input
-                  type="url"
-                  value={newJewellery.image}
-                  onChange={(e) =>
-                    setNewJewellery({ ...newJewellery, image: e.target.value })
-                  }
-                  placeholder="https://example.com/image.jpg"
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
                   required
                 />
               </div>

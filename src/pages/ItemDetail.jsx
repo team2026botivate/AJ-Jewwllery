@@ -21,6 +21,7 @@ import {
   CheckCircle,
   Info,
 } from "lucide-react";
+import Footer from "../components/Footer";
 
 const ItemDetail = () => {
   // Mock data - replace with your actual hooks and params
@@ -141,7 +142,7 @@ const ItemDetail = () => {
 
       {/* Main Content */}
       <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="grid grid-cols-1 gap-8 animate-fade-in lg:grid-cols-2 lg:gap-12">
           {/* Enhanced Image Section */}
           <div className="space-y-6">
             {/* Main Image with Zoom */}
@@ -439,6 +440,7 @@ const ItemDetail = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };
