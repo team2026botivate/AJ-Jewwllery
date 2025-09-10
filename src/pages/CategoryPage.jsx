@@ -161,15 +161,21 @@ const CategoryPage = () => {
                 className="flex items-center p-2 space-x-2 text-gray-600 rounded-lg transition-colors hover:text-gray-900 hover:bg-gray-100"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span>Back</span>
+                <span className="hidden sm:inline">Back</span>
               </button>
               <div className="flex justify-center items-center w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg">
                 <span className="text-sm font-bold text-white">AT</span>
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
                 <p className="text-sm text-gray-500">
                   {decodedCategoryName} Collection
+                </p>
+              </div>
+              <div className="sm:hidden">
+                <h1 className="text-lg font-bold text-gray-900">AT Jeweller</h1>
+                <p className="text-xs text-gray-500">
+                  {decodedCategoryName}
                 </p>
               </div>
             </div>
@@ -201,10 +207,10 @@ const CategoryPage = () => {
 
       <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* Search and Filters */}
-        <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
             {/* Search */}
-            <div className="relative">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" />
               <input
                 type="text"
@@ -220,7 +226,7 @@ const CategoryPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 w-full bg-white rounded-xl border border-gray-300 appearance-none focus:ring-2 focus:ring-amber-500"
+                className="px-4 py-3 w-full bg-white rounded-xl border border-gray-300 appearance-none focus:ring-2 focus:ring-amber-500 lg:w-auto"
               >
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -232,7 +238,7 @@ const CategoryPage = () => {
             </div>
 
             {/* View Toggle */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center lg:justify-center">
               <div className="flex p-1 bg-gray-100 rounded-lg">
                 <button
                   onClick={() => setViewMode("grid")}
@@ -251,7 +257,7 @@ const CategoryPage = () => {
                   <List className="w-4 h-4" />
                 </button>
               </div>
-              <span className="text-sm text-gray-600">
+              <span className="ml-4 text-sm text-gray-600 lg:ml-0">
                 {filteredJewellery.length} items
               </span>
             </div>

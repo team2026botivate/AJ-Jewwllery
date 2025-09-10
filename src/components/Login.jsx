@@ -31,16 +31,16 @@ const Login = () => {
 
   return (
     <div className="flex justify-center items-center px-4 min-h-screen bg-gradient-to-tr from-amber-600 via-gray-900 to-black sm:px-6 lg:px-8">
-      <div className="p-6 w-full max-w-md rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/10 border-white/20 sm:p-8">
+      <div className="p-4 w-full max-w-md rounded-3xl border shadow-2xl backdrop-blur-xl bg-white/10 border-white/20 sm:p-6 lg:p-8">
         {/* Logo / Branding */}
-        <div className="mb-6 text-center sm:mb-8">
-          <div className="flex justify-center items-center mx-auto w-16 h-16 text-2xl font-bold text-white bg-amber-500 rounded-full shadow-lg">
+        <div className="mb-4 text-center sm:mb-6 lg:mb-8">
+          <div className="flex justify-center items-center mx-auto w-12 h-12 bg-amber-500 rounded-full shadow-lg sm:w-16 sm:h-16">
             AT
           </div>
-          <h1 className="mt-4 text-xl font-bold text-gray-100 sm:text-2xl">
+          <h1 className="text-lg font-bold text-gray-100 sm:text-xl lg:text-2xl">
             AT Jeweller
           </h1>
-          <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+          <h2 className="mt-1 text-xl font-semibold text-white sm:text-2xl lg:text-3xl">
             Catalog
           </h2>
           <p className="mt-1 text-sm text-gray-400 sm:text-base">

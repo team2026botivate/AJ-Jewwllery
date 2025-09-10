@@ -18,6 +18,7 @@ import {
   List,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Star,
   Gem,
   Crown,
@@ -27,6 +28,7 @@ import {
   ShoppingBag,
   Watch,
   Shirt,
+  Menu,
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -50,7 +52,8 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [viewMode, setViewMode] = useState("grid");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
 
@@ -147,6 +150,18 @@ const AdminDashboard = () => {
     }
   }, [newJewellery.image]);
 
+  // Responsive sidebar behavior: open on desktop, closed on mobile
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handleChange = () => {
+      setSidebarOpen(mq.matches);
+      setIsMobile(!mq.matches);
+    };
+    handleChange();
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+
   const handleAddJewellery = (e) => {
     e.preventDefault();
     if (newJewellery.category && newJewellery.name && newJewellery.image) {
@@ -212,75 +227,88 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Mobile Menu Button */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed top-0 left-1 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-80" : "w-20"
-        } transition-all duration-300 bg-white shadow-xl border-r border-gray-200 flex flex-col`}
-      >
-        {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            {sidebarOpen && (
+      {sidebarOpen && (
+        <div className="flex fixed inset-y-0 left-0 z-40 flex-col w-80 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0">
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
                 <p className="text-sm text-gray-500">Admin Dashboard</p>
               </div>
-            )}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-            >
-              {sidebarOpen ? (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden"
+              >
                 <ChevronLeft className="w-5 h-5" />
-              ) : (
-                <ChevronRight className="w-5 h-5" />
-              )}
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2">
+            {[
+              { id: "jewellery", label: "Jewellery Catalog", icon: Package },
+              { id: "bookings", label: "User Bookings", icon: BookOpen },
+              { id: "users", label: "User Management", icon: Users },
+            ].map((tab) => (
+              <div key={tab.id} className="relative">
+                {/* Active indicator bar */}
+                {activeTab === tab.id && (
+                  <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500 rounded-r-full"></div>
+                )}
+                <button
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (isMobile) setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all
+                    ${
+                      activeTab === tab.id
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ml-2"
+                        : "text-gray-700 hover:bg-gray-100 hover:ml-1"
+                    }`}
+                  title={!sidebarOpen ? tab.label : ""}
+                >
+                  <tab.icon className="flex-shrink-0 w-5 h-5" />
+                  {sidebarOpen && <span>{tab.label}</span>}
+                </button>
+              </div>
+            ))}
+          </nav>
+
+          {/* Logout */}
+          <div className="p-4 border-t border-gray-200">
+            <button
+              onClick={handleLogout}
+              className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
+              title={!sidebarOpen ? "Logout" : ""}
+            >
+              <LogOut className="w-5 h-5" />
+              {sidebarOpen && <span>Logout</span>}
             </button>
           </div>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {[
-            { id: "jewellery", label: "Jewellery Catalog", icon: Package },
-            { id: "bookings", label: "User Bookings", icon: BookOpen },
-            { id: "users", label: "User Management", icon: Users },
-          ].map((tab) => (
-            <div key={tab.id} className="relative">
-              {/* Active indicator bar */}
-              {activeTab === tab.id && (
-                <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500 rounded-r-full"></div>
-              )}
-              <button
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all
-                  ${
-                    activeTab === tab.id
-                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ml-2"
-                      : "text-gray-700 hover:bg-gray-100 hover:ml-1"
-                  }`}
-                title={!sidebarOpen ? tab.label : ""}
-              >
-                <tab.icon className="flex-shrink-0 w-5 h-5" />
-                {sidebarOpen && <span>{tab.label}</span>}
-              </button>
-            </div>
-          ))}
-        </nav>
-
-        {/* Logout */}
-        <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={handleLogout}
-            className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
-            title={!sidebarOpen ? "Logout" : ""}
-          >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span>Logout</span>}
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Main Content */}
       <div
@@ -288,8 +316,8 @@ const AdminDashboard = () => {
         style={{ scrollBehavior: "auto" }}
       >
         {/* Top Bar */}
-        <header className="p-6 bg-white border-b border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center">
+        <header className="p-4 bg-white border-b border-gray-200 shadow-sm lg:p-6">
+          <div className="flex flex-col justify-between items-start space-y-4 lg:flex-row lg:items-center lg:space-y-0">
             <div className="flex-1 max-w-lg"></div>
 
             {activeTab === "jewellery" && (
@@ -297,7 +325,31 @@ const AdminDashboard = () => {
                 {/* Category Filter */}
                 <div className="flex items-center space-x-2">
                   <Filter className="w-5 h-5 text-gray-600" />
-                  <div className="flex overflow-x-auto p-1 max-w-2xl bg-gray-100 rounded-lg scrollbar-hide">
+                  {/* Mobile Category Dropdown */}
+                  <div className="relative w-full lg:hidden">
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        if (
+                          (selectedCategory !== "All" && e.target.value === "All") ||
+                          (selectedCategory === "All" && e.target.value !== "All")
+                        ) {
+                          setCurrentPage(1);
+                        }
+                      }}
+                      className="px-4 py-2 w-full bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat} ({categoryStats[cat] || 0})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
+                  </div>
+                  {/* Desktop Category Pills */}
+                  <div className="hidden overflow-x-auto p-1 max-w-2xl bg-gray-100 rounded-lg lg:flex scrollbar-hide">
                     {categories.map((cat) => {
                       // Define icons for each category
                       const getCategoryIcon = (category) => {
@@ -553,7 +605,7 @@ const AdminDashboard = () => {
                 </h2>
               </div>
               <div className="p-6">
-                <div className="overflow-hidden rounded-lg border border-gray-200">
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -689,15 +741,15 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Mobile Card View */}
-                  <div className="md:hidden space-y-4">
+                  <div className="space-y-4 md:hidden">
                     {users.map((u) => (
                       <div
                         key={u.id}
-                        className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                        className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            <h3 className="mb-1 text-lg font-semibold text-gray-900">
                               {u.name}
                             </h3>
                             <p className="text-sm text-gray-600">

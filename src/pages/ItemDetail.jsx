@@ -1,9 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
-  ArrowLeft, ShoppingCart, Heart, Share2, Plus, Minus, Star,
-  Shield, Truck, Clock, Zap, Eye, ChevronLeft, ChevronRight,
-  Award, Gem, Camera, MessageCircle, CheckCircle, Info
-} from 'lucide-react';
+  ArrowLeft,
+  ShoppingCart,
+  Heart,
+  Share2,
+  Plus,
+  Minus,
+  Star,
+  Shield,
+  Truck,
+  Clock,
+  Zap,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  Award,
+  Gem,
+  Camera,
+  MessageCircle,
+  CheckCircle,
+  Info,
+} from "lucide-react";
 
 const ItemDetail = () => {
   // Mock data - replace with your actual hooks and params
@@ -13,24 +30,30 @@ const ItemDetail = () => {
     category: "Necklaces",
     price: 85000,
     originalPrice: 95000,
-    description: "Exquisite handcrafted necklace featuring premium diamonds set in 18K gold. This stunning piece combines traditional craftsmanship with contemporary elegance, making it perfect for special occasions.",
+    description:
+      "Exquisite handcrafted necklace featuring premium diamonds set in 18K gold. This stunning piece combines traditional craftsmanship with contemporary elegance, making it perfect for special occasions.",
     images: [
       "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=600&fit=crop",
       "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=600&h=600&fit=crop",
       "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=600&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=600&fit=crop"
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=600&fit=crop",
     ],
     quantity: 3,
     rating: 4.8,
     reviews: 127,
-    features: ["18K Gold", "Natural Diamonds", "Handcrafted", "Certificate Included"],
+    features: [
+      "18K Gold",
+      "Natural Diamonds",
+      "Handcrafted",
+      "Certificate Included",
+    ],
     specifications: {
       material: "18K Gold with Natural Diamonds",
       weight: "25.5 grams",
       dimensions: "45cm length, adjustable",
       warranty: "Lifetime",
-      certification: "GIA Certified"
-    }
+      certification: "GIA Certified",
+    },
   };
 
   const [selectedImage, setSelectedImage] = useState(0);
@@ -38,10 +61,11 @@ const ItemDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState("details");
 
-  const navigate = (path) => console.log('Navigate to:', path);
-  const addToCart = (item, qty) => console.log('Added to cart:', item.name, 'Quantity:', qty);
+  const navigate = (path) => console.log("Navigate to:", path);
+  const addToCart = (item, qty) =>
+    console.log("Added to cart:", item.name, "Quantity:", qty);
 
   const handleAddToCart = () => {
     addToCart(item, quantity);
@@ -56,11 +80,11 @@ const ItemDetail = () => {
           url: window.location.href,
         });
       } catch (err) {
-        console.log('Error sharing:', err);
+        console.log("Error sharing:", err);
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -69,7 +93,9 @@ const ItemDetail = () => {
   };
 
   const prevImage = () => {
-    setSelectedImage((prev) => (prev - 1 + item.images.length) % item.images.length);
+    setSelectedImage(
+      (prev) => (prev - 1 + item.images.length) % item.images.length
+    );
   };
 
   // Auto-play image slideshow
@@ -82,7 +108,9 @@ const ItemDetail = () => {
     return () => clearInterval(interval);
   }, [zoomedImage]);
 
-  const discount = Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100);
+  const discount = Math.round(
+    ((item.originalPrice - item.price) / item.originalPrice) * 100
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
@@ -91,13 +119,16 @@ const ItemDetail = () => {
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="flex items-center space-x-2 text-gray-600 transition-colors hover:text-gray-900 group"
             >
               <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-              <span className="font-medium">Back to Catalog</span>
+              <span className="hidden sm:inline font-medium">
+                Back to Catalog
+              </span>
+              <span className="sm:hidden font-medium">Back</span>
             </button>
-            
+
             <div className="flex items-center space-x-2">
               <Star className="w-4 h-4 text-amber-400 fill-current" />
               {/* Rating removed - Clean Design */}
@@ -110,8 +141,7 @@ const ItemDetail = () => {
 
       {/* Main Content */}
       <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-          
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Enhanced Image Section */}
           <div className="space-y-6">
             {/* Main Image with Zoom */}
@@ -123,7 +153,7 @@ const ItemDetail = () => {
                   className="object-cover w-full h-full transition-transform duration-500 cursor-zoom-in hover:scale-105"
                   onClick={() => setZoomedImage(true)}
                 />
-                
+
                 {/* Navigation arrows */}
                 <button
                   onClick={prevImage}
@@ -158,9 +188,9 @@ const ItemDetail = () => {
                   key={i}
                   onClick={() => setSelectedImage(i)}
                   className={`w-20 h-20 rounded-xl border-2 transition-all overflow-hidden flex-shrink-0 ${
-                    selectedImage === i 
-                      ? 'border-amber-500 ring-2 ring-amber-200 scale-105' 
-                      : 'border-gray-200 hover:border-gray-300'
+                    selectedImage === i
+                      ? "border-amber-500 ring-2 ring-amber-200 scale-105"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <img
@@ -175,9 +205,14 @@ const ItemDetail = () => {
             {/* Features Highlight */}
             <div className="grid grid-cols-2 gap-3">
               {item.features.map((feature, i) => (
-                <div key={i} className="flex items-center p-3 space-x-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
+                <div
+                  key={i}
+                  className="flex items-center p-3 space-x-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100"
+                >
                   <CheckCircle className="w-4 h-4 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">{feature}</span>
+                  <span className="text-sm font-medium text-amber-800">
+                    {feature}
+                  </span>
                 </div>
               ))}
             </div>
@@ -185,7 +220,6 @@ const ItemDetail = () => {
 
           {/* Enhanced Details Section */}
           <div className="space-y-8">
-            
             {/* Product Header */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -200,8 +234,10 @@ const ItemDetail = () => {
                 )}
               </div>
 
-              <h1 className="text-4xl font-bold leading-tight text-gray-900">{item.name}</h1>
-              
+              <h1 className="text-4xl font-bold leading-tight text-gray-900">
+                {item.name}
+              </h1>
+
               {/* Rating & Reviews - Removed */}
               {/* Rating display removed for clean design */}
               {/* <div className="flex items-center space-x-4">
@@ -237,13 +273,15 @@ const ItemDetail = () => {
             {/* Description */}
             <div className="space-y-3">
               <p className="text-lg leading-relaxed text-gray-700">
-                {showFullDescription ? item.description : `${item.description.slice(0, 150)}...`}
+                {showFullDescription
+                  ? item.description
+                  : `${item.description.slice(0, 150)}...`}
               </p>
               <button
                 onClick={() => setShowFullDescription(!showFullDescription)}
                 className="text-sm font-medium text-amber-600 hover:text-amber-700"
               >
-                {showFullDescription ? 'Show less' : 'Read more'}
+                {showFullDescription ? "Show less" : "Read more"}
               </button>
             </div>
 
@@ -251,15 +289,19 @@ const ItemDetail = () => {
             <div className="p-6 space-y-4 bg-gray-50 rounded-2xl border border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900">Quantity</span>
-                <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                  item.quantity > 5 ? 'bg-green-100 text-green-800' :
-                  item.quantity > 2 ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                <span
+                  className={`text-sm font-medium px-3 py-1 rounded-full ${
+                    item.quantity > 5
+                      ? "bg-green-100 text-green-800"
+                      : item.quantity > 2
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
                   {item.quantity} available
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-6">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -268,10 +310,14 @@ const ItemDetail = () => {
                   <Minus className="w-5 h-5" />
                 </button>
                 <div className="flex-1 text-center">
-                  <span className="text-2xl font-bold text-gray-900">{quantity}</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {quantity}
+                  </span>
                 </div>
                 <button
-                  onClick={() => setQuantity(Math.min(item.quantity, quantity + 1))}
+                  onClick={() =>
+                    setQuantity(Math.min(item.quantity, quantity + 1))
+                  }
                   className="flex justify-center items-center w-12 h-12 bg-white rounded-xl border border-gray-300 shadow-sm transition-colors hover:bg-gray-100"
                 >
                   <Plus className="w-5 h-5" />
@@ -296,14 +342,16 @@ const ItemDetail = () => {
                   onClick={() => setIsWishlisted(!isWishlisted)}
                   className={`py-3 px-6 font-medium rounded-xl transition-all flex items-center justify-center space-x-2 ${
                     isWishlisted
-                      ? 'text-red-700 bg-red-100 border border-red-200'
-                      : 'text-gray-700 bg-gray-100 border border-gray-300 hover:bg-gray-200'
+                      ? "text-red-700 bg-red-100 border border-red-200"
+                      : "text-gray-700 bg-gray-100 border border-gray-300 hover:bg-gray-200"
                   }`}
                 >
-                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
-                  <span>{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                  <Heart
+                    className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`}
+                  />
+                  <span>{isWishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
                 </button>
-                
+
                 <button
                   onClick={handleShare}
                   className="flex justify-center items-center px-6 py-3 space-x-2 font-medium text-gray-700 bg-gray-100 rounded-xl border border-gray-300 transition-colors hover:bg-gray-200"
@@ -317,14 +365,27 @@ const ItemDetail = () => {
             {/* Trust Indicators */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: Shield, text: "Lifetime Warranty", color: "text-green-600" },
+                {
+                  icon: Shield,
+                  text: "Lifetime Warranty",
+                  color: "text-green-600",
+                },
                 { icon: Truck, text: "Free Shipping", color: "text-blue-600" },
-                { icon: Award, text: "Certified Quality", color: "text-purple-600" },
-                { icon: Clock, text: "Easy Returns", color: "text-orange-600" }
+                {
+                  icon: Award,
+                  text: "Certified Quality",
+                  color: "text-purple-600",
+                },
+                { icon: Clock, text: "Easy Returns", color: "text-orange-600" },
               ].map(({ icon: Icon, text, color }, i) => (
-                <div key={i} className="flex items-center p-4 space-x-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div
+                  key={i}
+                  className="flex items-center p-4 space-x-3 bg-white rounded-xl border border-gray-200 shadow-sm"
+                >
                   <Icon className={`w-6 h-6 ${color}`} />
-                  <span className="text-sm font-medium text-gray-900">{text}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {text}
+                  </span>
                 </div>
               ))}
             </div>
@@ -337,10 +398,17 @@ const ItemDetail = () => {
               </h3>
               <div className="overflow-hidden bg-white rounded-2xl border border-gray-200">
                 {Object.entries(item.specifications).map(([key, value], i) => (
-                  <div key={i} className={`flex justify-between items-center px-6 py-4 ${
-                    i !== Object.entries(item.specifications).length - 1 ? 'border-b border-gray-100' : ''
-                  }`}>
-                    <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                  <div
+                    key={i}
+                    className={`flex justify-between items-center px-6 py-4 ${
+                      i !== Object.entries(item.specifications).length - 1
+                        ? "border-b border-gray-100"
+                        : ""
+                    }`}
+                  >
+                    <span className="text-gray-600 capitalize">
+                      {key.replace(/([A-Z])/g, " $1")}:
+                    </span>
                     <span className="font-medium text-gray-900">{value}</span>
                   </div>
                 ))}
