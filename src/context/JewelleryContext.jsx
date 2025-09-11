@@ -11,6 +11,16 @@ export const useJewellery = () => {
 };
 
 export const JewelleryProvider = ({ children }) => {
+  // Resolve public assets with Vite base; keep data URLs intact
+  const asset = (path) => {
+    if (!path) return path;
+    if (typeof path !== 'string') return path;
+    if (path.startsWith('data:')) return path;
+    const base = (import.meta.env.BASE_URL || '/');
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${cleanBase}/${cleanPath}`;
+  };
   // Initial mock data - this will be replaced by your backend API later
   const initialJewellery = [
     {
@@ -368,7 +378,9 @@ export const JewelleryProvider = ({ children }) => {
   const [jewellery, setJewellery] = useState(() => {
     // Try to load from localStorage first, fallback to initial data
     const saved = localStorage.getItem('jewellery-data');
-    return saved ? JSON.parse(saved) : initialJewellery;
+    const base = saved ? JSON.parse(saved) : initialJewellery;
+    // Normalize image paths for deploy base
+    return base.map((item) => ({ ...item, image: asset(item.image) }));
   });
 
   const [bookings, setBookings] = useState(() => {

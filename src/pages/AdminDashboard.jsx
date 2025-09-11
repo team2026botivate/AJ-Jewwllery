@@ -340,14 +340,14 @@ const AdminDashboard = () => {
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
         {sidebarOpen && (
-          <div className="flex fixed inset-y-0 left-0 z-40 flex-col w-80 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0">
+          <div className="flex fixed inset-y-0 left-0 z-50 flex-col w-80 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
@@ -357,12 +357,21 @@ const AdminDashboard = () => {
                   </h1>
                   <p className="text-sm text-gray-500">Admin Dashboard</p>
                 </div>
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
+                <div className="flex items-center space-x-2 lg:hidden">
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800"
+                    title="Logout"
+                  >
+                    Logout
+                  </button>
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 rounded-lg transition-colors hover:bg-gray-100"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
 

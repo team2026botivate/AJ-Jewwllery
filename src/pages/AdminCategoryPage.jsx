@@ -39,50 +39,58 @@ const AdminCategoryPage = () => {
     return map[key] || decodeURIComponent(name);
   };
   const [selectedCategory, setSelectedCategory] = useState(normalizeCategoryName(categoryName));
+  // Resolve public assets with Vite base (safe join)
+  const asset = (name) => {
+    if (!name) return name;
+    const base = import.meta.env.BASE_URL || '/';
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const clean = name.startsWith('/') ? name.slice(1) : name;
+    return `${cleanBase}/${clean}`;
+  };
   const [categoryImages, setCategoryImages] = useState({
     Animals: {
-      Lion: ["/download.jpg", "/download (1).jpg"],
-      Tiger: ["/download (2).jpg"],
-      Elephant: ["/download (3).jpg"],
+      Lion: [asset('download.jpg'), asset('download (1).jpg')],
+      Tiger: [asset('download (2).jpg')],
+      Elephant: [asset('download (3).jpg')],
     },
     "Arabic Style 21k": {
-      Necklace: ["/download (2).jpg"],
-      Bracelet: ["/images.jpg"],
-      Ring: ["/download (3).jpg"],
+      Necklace: [asset('download (2).jpg')],
+      Bracelet: [asset('images.jpg')],
+      Ring: [asset('download (3).jpg')],
     },
     Rings: {
-      Diamond: ["/download (1).jpg"],
-      Sapphire: ["/download (2).jpg"],
-      Ruby: ["/download (3).jpg"],
+      Diamond: [asset('download (1).jpg')],
+      Sapphire: [asset('download (2).jpg')],
+      Ruby: [asset('download (3).jpg')],
     },
     Earrings: {
-      Pearl: ["/images.jpg"],
-      Gold: ["/download.jpg"],
-      Diamond: ["/download (1).jpg"],
+      Pearl: [asset('images.jpg')],
+      Gold: [asset('download.jpg')],
+      Diamond: [asset('download (1).jpg')],
     },
     Bracelets: {
-      Silver: ["/images.jpg"],
-      Gold: ["/download (2).jpg"],
-      Beaded: ["/download.jpg"],
+      Silver: [asset('images.jpg')],
+      Gold: [asset('download (2).jpg')],
+      Beaded: [asset('download.jpg')],
     },
     Pendant: {
-      Heart: ["/download (1).jpg"],
-      Cross: ["/download (2).jpg"],
-      Star: ["/download (3).jpg"],
+      Heart: [asset('download (1).jpg')],
+      Cross: [asset('download (2).jpg')],
+      Star: [asset('download (3).jpg')],
     },
     "Man Collection": {
-      Chain: ["/images.jpg"],
-      Bracelet: ["/download.jpg"],
-      Ring: ["/download (1).jpg"],
+      Chain: [asset('images.jpg')],
+      Bracelet: [asset('download.jpg')],
+      Ring: [asset('download (1).jpg')],
     },
     SET: {
-      Gold: ["/download (3).jpg"],
-      Diamond: ["/images.jpg"],
-      Silver: ["/download.jpg"],
+      Gold: [asset('download (3).jpg')],
+      Diamond: [asset('images.jpg')],
+      Silver: [asset('download.jpg')],
     },
     Mine: {
-      Diamond: ["/download (1).jpg"],
-      Ruby: ["/download (2).jpg"],
+      Diamond: [asset('download (1).jpg')],
+      Ruby: [asset('download (2).jpg')],
     },
   });
 
