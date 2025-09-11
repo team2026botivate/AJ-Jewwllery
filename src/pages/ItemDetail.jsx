@@ -12,6 +12,7 @@ import {
   Clock,
   Zap,
   Eye,
+  
   ChevronLeft,
   ChevronRight,
   Award,
@@ -124,10 +125,10 @@ const ItemDetail = () => {
               className="flex items-center space-x-2 text-gray-600 transition-colors hover:text-gray-900 group"
             >
               <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-              <span className="hidden sm:inline font-medium">
+              <span className="hidden font-medium sm:inline">
                 Back to Catalog
               </span>
-              <span className="sm:hidden font-medium">Back</span>
+              <span className="font-medium sm:hidden">Back</span>
             </button>
 
             <div className="flex items-center space-x-2">

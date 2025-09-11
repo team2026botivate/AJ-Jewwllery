@@ -34,6 +34,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useJewellery } from "../context/JewelleryContext";
 import Footer from "../components/Footer";
+import Subcategories from "../components/Subcategories";
 
 const CategoryPage = () => {
   const { user, logout } = useAuth();
@@ -44,6 +45,71 @@ const CategoryPage = () => {
   const decodedCategoryName = categoryName
     ? decodeURIComponent(categoryName).replace(/-/g, " ")
     : "All";
+
+  // Normalize category naming (singular/plural) so URL always maps to our keys
+  const normalizeCategoryName = (name) => {
+    const map = {
+      earring: "Earrings",
+      earrings: "Earrings",
+      bracelet: "Bracelets",
+      bracelets: "Bracelets",
+      ring: "Rings",
+      set: "SET",
+      men: "Man Collection",
+      "man collection": "Man Collection",
+    };
+    const key = name.toLowerCase();
+    return map[key] || name;
+  };
+  const normalizedCategoryName = normalizeCategoryName(decodedCategoryName);
+
+  // Demo subcategory images (using only existing public assets)
+  const [categoryImages, setCategoryImages] = useState({
+    Animals: {
+      Lion: ["/download.jpg", "/download (1).jpg"],
+      Tiger: ["/download (2).jpg"],
+      Elephant: ["/download (3).jpg"],
+    },
+    "Arabic Style 21k": {
+      Necklace: ["/download (2).jpg"],
+      Bracelet: ["/images.jpg"],
+      Ring: ["/download (3).jpg"],
+    },
+    Rings: {
+      Diamond: ["/download (1).jpg"],
+      Sapphire: ["/download (2).jpg"],
+      Ruby: ["/download (3).jpg"],
+    },
+    Earrings: {
+      Pearl: ["/images.jpg"],
+      Gold: ["/download.jpg"],
+      Diamond: ["/download (1).jpg"],
+    },
+    Bracelets: {
+      Silver: ["/images.jpg"],
+      Gold: ["/download (2).jpg"],
+      Beaded: ["/download.jpg"],
+    },
+    Pendant: {
+      Heart: ["/download (1).jpg"],
+      Cross: ["/download (2).jpg"],
+      Star: ["/download (3).jpg"],
+    },
+    "Man Collection": {
+      Chain: ["/images.jpg"],
+      Bracelet: ["/download.jpg"],
+      Ring: ["/download (1).jpg"],
+    },
+    SET: {
+      Gold: ["/download (3).jpg"],
+      Diamond: ["/images.jpg"],
+      Silver: ["/download.jpg"],
+    },
+    Mine: {
+      Diamond: ["/download (1).jpg"],
+      Ruby: ["/download (2).jpg"],
+    },
+  });
   const [bookingQuantities, setBookingQuantities] = useState({});
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -151,7 +217,7 @@ const CategoryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pb-20">
       {/* Enhanced Header */}
       <header className="sticky top-0 z-40 border-b border-gray-200 shadow-sm backdrop-blur-md bg-white/80">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -207,6 +273,32 @@ const CategoryPage = () => {
       </header>
 
       <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        {/* Gallery Section */}
+        {normalizedCategoryName && normalizedCategoryName !== "All" && (
+          <div className="mb-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {normalizedCategoryName} Gallery
+                  </h2>
+                  <p className="text-gray-600">
+                    Explore our {normalizedCategoryName.toLowerCase()} collection
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {Object.keys(categoryImages[normalizedCategoryName] || {}).length} subcategories
+                </div>
+              </div>
+              <Subcategories
+                selectedCategory={normalizedCategoryName}
+                categoryImages={categoryImages}
+                setCategoryImages={setCategoryImages}
+                setSelectedCategory={() => {}}
+              />
+            </div>
+          </div>
+        )}
         {/* Search and Filters */}
         <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center">

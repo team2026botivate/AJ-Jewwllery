@@ -407,7 +407,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-28">
       {/* Mobile Menu Button */}
       {!sidebarOpen && (
         <button

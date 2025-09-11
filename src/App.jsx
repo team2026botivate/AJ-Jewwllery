@@ -6,6 +6,8 @@ import Login from "./components/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import ItemDetail from "./pages/ItemDetail";
+import CategoryPage from "./pages/CategoryPage";
+import AdminCategoryPage from "./pages/AdminCategoryPage";
 import { useAuth } from "./context/AuthContext";
 
 function AppContent() {
@@ -13,8 +15,8 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 rounded-full border-b-2 border-amber-500 animate-spin"></div>
       </div>
     );
   }
@@ -30,6 +32,7 @@ function AppContent() {
         element={user.role === "admin" ? <AdminDashboard /> : <UserDashboard />}
       />
       <Route path="/item/:id" element={<ItemDetail />} />
+      <Route path="/category/:categoryName" element={user.role === "admin" ? <AdminCategoryPage /> : <CategoryPage />} />
     </Routes>
   );
 }
