@@ -55,8 +55,10 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [viewMode, setViewMode] = useState("grid");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  // Initialize sidebar state based on current viewport to prevent desktop layout jump
+  const initialIsDesktop = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(min-width: 1024px)").matches;
+  const [sidebarOpen, setSidebarOpen] = useState(initialIsDesktop);
+  const [isMobile, setIsMobile] = useState(!initialIsDesktop);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
 
@@ -105,18 +107,7 @@ const AdminDashboard = () => {
     image: "",
   });
 
-  const [categories, setCategories] = useState([
-    "All",
-    "Animals",
-    "Arabic Style 21k",
-    "Bracelets",
-    "Mine",
-    "SET",
-    "Pendant",
-    "Man Collection",
-    "Rings",
-    "Earrings",
-  ]);
+  // Categories now derive from JewelleryContext to stay in sync with the catalogue
 
   const [categoryImages, setCategoryImages] = useState({
     All: { Default: ["/download.jpg", "/images.jpg"] },
@@ -140,12 +131,10 @@ const AdminDashboard = () => {
   });
   const [categoryImagePreview, setCategoryImagePreview] = useState("");
 
-  // Filtered and unique categories for display
+  // Categories from context to keep Admin and Catalogue in sync
   const uniqueCategories = useMemo(() => {
-    // Remove duplicates and ensure unique categories
-    const unique = [...new Set(categories)];
-    return unique.filter(cat => cat && cat.trim() !== "");
-  }, [categories]);
+    return getCategories();
+  }, [jewellery]);
 
   // Category stats for unique categories
   const categoryStats = useMemo(() => {
@@ -302,7 +291,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      setCategories([...categories, newCategory.name]);
+      // Categories list is derived from jewellery; add a product in this category to make it visible
       const subcategory = newCategory.subcategory || "Default";
       setCategoryImages({
         ...categoryImages,
@@ -311,7 +300,7 @@ const AdminDashboard = () => {
           [subcategory]: [newCategory.image],
         },
       });
-      alert("Category added successfully!");
+      alert("Category saved! It will appear once a product is added to this category.");
       resetCategoryForm();
     }
   };
@@ -325,7 +314,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 overflow-x-hidden">
       <div className="flex flex-1">
         {/* Mobile Menu Button */}
         {!sidebarOpen && (
@@ -347,7 +336,7 @@ const AdminDashboard = () => {
 
         {/* Sidebar */}
         {sidebarOpen && (
-          <div className="flex fixed inset-y-0 left-0 z-50 flex-col w-80 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0">
+          <div className="flex fixed inset-y-0 left-0 z-50 flex-col w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 pb-32 overflow-y-auto overflow-x-hidden scrollbar-hide">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
@@ -358,13 +347,6 @@ const AdminDashboard = () => {
                   <p className="text-sm text-gray-500">Admin Dashboard</p>
                 </div>
                 <div className="flex items-center space-x-2 lg:hidden">
-                  <button
-                    onClick={handleLogout}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800"
-                    title="Logout"
-                  >
-                    Logout
-                  </button>
                   <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     className="p-2 rounded-lg transition-colors hover:bg-gray-100"
@@ -393,16 +375,16 @@ const AdminDashboard = () => {
                       setActiveTab(tab.id);
                       if (isMobile) setSidebarOpen(false);
                     }}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all
+                    className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl font-medium transition-colors overflow-hidden min-w-0
                     ${
                       activeTab === tab.id
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ml-2"
-                        : "text-gray-700 hover:bg-gray-100 hover:ml-1"
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
                     title={!sidebarOpen ? tab.label : ""}
                   >
                     <tab.icon className="flex-shrink-0 w-5 h-5" />
-                    {sidebarOpen && <span>{tab.label}</span>}
+                    {sidebarOpen && <span className="truncate whitespace-nowrap">{tab.label}</span>}
                   </button>
                 </div>
               ))}
@@ -424,7 +406,7 @@ const AdminDashboard = () => {
 
         {/* Main Content */}
         <div
-          className="flex overflow-hidden flex-col flex-1"
+          className="flex overflow-hidden flex-col flex-1 min-w-0 lg:ml-72 overflow-x-hidden"
           style={{ scrollBehavior: "auto" }}
         >
           {/* Top Bar */}
@@ -556,7 +538,7 @@ const AdminDashboard = () => {
           </header>
 
           {/* Content Area */}
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-4 sm:p-6 pb-28 lg:pb-6">
             {/* Categories Tab */}
             {activeTab === "categories" && (
               <div className="space-y-6">
@@ -574,12 +556,7 @@ const AdminDashboard = () => {
 
                 {!selectedCategory || selectedCategory === "All" ? (
                   <div
-                    className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 hide-scrollbar"
-                    style={{
-                      overflowY: "auto",
-                      maxHeight: "calc(100vh - 210px)",
-                      width: "100%",
-                    }}
+                    className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4"
                   >
                     {uniqueCategories.slice(1).map((category) => (
                       <div
@@ -591,7 +568,13 @@ const AdminDashboard = () => {
                       >
                         <div className="relative">
                           <img
-                            src={categoryImages[category][Object.keys(categoryImages[category] || {})[0]][0]}
+                            src={
+                              (
+                                (categoryImages[category] || {})[
+                                  Object.keys(categoryImages[category] || {})[0]
+                                ] || []
+                              )[0] || "/download.jpg"
+                            }
                             alt={category}
                             className="object-cover w-full h-44 sm:h-52 md:h-60 transition-transform duration-500 group-hover:scale-105"
                           />
@@ -626,16 +609,11 @@ const AdminDashboard = () => {
                 {paginatedItems.length > 0 ? (
                   <>
                     <div
-                      className={`grid gap-6 transition-all duration-300 ease-in-out hide-scrollbar animate-fade-in ${
+                      className={`grid gap-4 sm:gap-6 transition-all duration-300 ease-in-out animate-fade-in ${
                         viewMode === "grid"
                           ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                           : "grid-cols-1"
                       }`}
-                      style={{
-                        minHeight: "400px",
-                        maxHeight: "calc(100vh - 300px)",
-                        overflowY: "auto",
-                      }}
                     >
                       {paginatedItems.map((item) => (
                         <div
@@ -1039,7 +1017,7 @@ const AdminDashboard = () => {
                     required
                   >
                     <option value="">Select Category</option>
-                    {categories.slice(1).map((cat) => (
+                    {uniqueCategories.slice(1).map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
@@ -1311,6 +1289,8 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 };

@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { useJewellery } from "../context/JewelleryContext";
 import Footer from "../components/Footer";
+import Subcategories from "../components/Subcategories";
 
 const UserDashboard = () => {
   const { user, logout } = useAuth();
@@ -221,18 +222,72 @@ const UserDashboard = () => {
     });
   }, [selectedCategory]);
 
-  const categories = [
-    "All",
-    "Animals",
-    "Arabic Style 21k",
-    "Bracelets",
-    "Mine",
-    "SET",
-    "Pendant",
-    "Man Collection",
-    "Rings",
-    "Earrings",
-  ];
+  // Categories pulled from JewelleryContext to stay perfectly in sync with catalogue
+  const categories = getCategories();
+
+  // Resolve public assets with Vite base (safe join)
+  const asset = (name) => {
+    if (!name) return name;
+    const base = import.meta.env.BASE_URL || "/";
+    const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const clean = name.startsWith("/") ? name.slice(1) : name;
+    return `${cleanBase}/${clean}`;
+  };
+
+  // Category images with subcategories (mirrors AdminCategoryPage)
+  const [categoryImages, setCategoryImages] = useState({
+    Animals: {
+      Lion: [asset("download.jpg"), asset("download (1).jpg")],
+      Tiger: [asset("download (2).jpg")],
+      Elephant: [asset("download (3).jpg")],
+    },
+    "Arabic Style 21k": {
+      Necklace: [asset("download (2).jpg")],
+      Bracelet: [asset("images.jpg")],
+      Ring: [asset("download (3).jpg")],
+    },
+    Rings: {
+      Diamond: [asset("download (1).jpg")],
+      Sapphire: [asset("download (2).jpg")],
+      Ruby: [asset("download (3).jpg")],
+    },
+    Earrings: {
+      Pearl: [asset("images.jpg")],
+      Gold: [asset("download.jpg")],
+      Diamond: [asset("download (1).jpg")],
+    },
+    Bracelets: {
+      Silver: [asset("images.jpg")],
+      Gold: [asset("download (2).jpg")],
+      Beaded: [asset("download.jpg")],
+    },
+    Pendant: {
+      Heart: [asset("download (1).jpg")],
+      Cross: [asset("download (2).jpg")],
+      Star: [asset("download (3).jpg")],
+    },
+    "Man Collection": {
+      Chain: [asset("images.jpg")],
+      Bracelet: [asset("download.jpg")],
+      Ring: [asset("download (1).jpg")],
+    },
+    SET: {
+      Gold: [asset("download (3).jpg")],
+      Diamond: [asset("images.jpg")],
+      Silver: [asset("download.jpg")],
+    },
+    Mine: {
+      Diamond: [asset("download (1).jpg")],
+      Ruby: [asset("download (2).jpg")],
+    },
+  });
+
+  const getCategoryCover = (category) => {
+    const group = categoryImages[category] || {};
+    const firstKey = Object.keys(group)[0];
+    const imgs = (group[firstKey] || []);
+    return imgs[0] || asset("download.jpg");
+  };
 
   // Category stats
   const categoryStats = useMemo(() => {
@@ -406,8 +461,15 @@ const UserDashboard = () => {
     window.location.href = "/";
   };
 
+  const handleBackToCategories = () => {
+    setSelectedCategory("All");
+    setSearchTerm("");
+    setCurrentPage(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-28">
+    <div className="flex pb-28 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-y-auto overflow-x-hidden scrollbar-hide">
       {/* Mobile Menu Button */}
       {!sidebarOpen && (
         <button
@@ -428,7 +490,7 @@ const UserDashboard = () => {
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="flex fixed inset-y-0 left-0 z-50 flex-col w-80 bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0">
+        <div className="flex fixed inset-y-0 left-0 z-40 flex-col w-[85vw] max-w-xs sm:max-w-sm bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-32 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
@@ -457,9 +519,9 @@ const UserDashboard = () => {
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
             {[
-              { id: "catalog", label: "Jewellery Catalog", icon: Package },
-              { id: "cart", label: "Shopping Cart", icon: ShoppingCart },
-              { id: "bookings", label: "My Orders", icon: History },
+              { id: "catalog", label: "Catalogue", icon: Package },
+              { id: "cart", label: "Cart", icon: ShoppingCart },
+              { id: "bookings", label: "Orders", icon: History },
             ].map((tab) => (
               <div key={tab.id} className="relative">
                 {/* Active indicator bar */}
@@ -469,18 +531,23 @@ const UserDashboard = () => {
                 <button
                   onClick={() => {
                     setActiveTab(tab.id);
+                    if (tab.id === "catalog") {
+                      setSelectedCategory("All");
+                      setSearchTerm("");
+                      setCurrentPage(1);
+                    }
                     if (isMobile) setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all
+                  className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl font-medium transition-colors overflow-hidden min-w-0
                     ${
                       activeTab === tab.id
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ml-2"
-                        : "text-gray-700 hover:bg-gray-100 hover:ml-1"
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
                   title={tab.label}
                 >
                   <tab.icon className="flex-shrink-0 w-5 h-5" />
-                  <span>{tab.label}</span>
+                  <span className="truncate whitespace-nowrap">{tab.label}</span>
                 </button>
               </div>
             ))}
@@ -514,9 +581,9 @@ const UserDashboard = () => {
           {/* Navigation Icons Only */}
           <nav className="flex-1 space-y-2">
             {[
-              { id: "catalog", label: "Jewellery Catalog", icon: Package },
-              { id: "cart", label: "Shopping Cart", icon: ShoppingCart },
-              { id: "bookings", label: "My Orders", icon: History },
+              { id: "catalog", label: "Catalogue", icon: Package },
+              { id: "cart", label: "Cart", icon: ShoppingCart },
+              { id: "bookings", label: "Orders", icon: History },
             ].map((tab) => (
               <div key={tab.id} className="relative">
                 {/* Active indicator bar */}
@@ -554,320 +621,274 @@ const UserDashboard = () => {
 
       {/* Main Content */}
       <div
-        className="flex overflow-hidden flex-col flex-1"
+        className="flex overflow-hidden flex-col flex-1 lg:ml-72"
         style={{ scrollBehavior: "auto" }}
       >
         {/* Top Bar */}
-        <header className="p-4 bg-white border-b border-gray-200 shadow-sm lg:p-6">
-          <div className="flex flex-col justify-between items-start space-y-4 lg:flex-row lg:items-center lg:space-y-0">
-            <div className="flex-1 max-w-lg"></div>
-
-            {activeTab === "catalog" && (
-              <div className="flex flex-col items-start space-y-4 w-full lg:flex-row lg:items-center lg:space-y-0 lg:w-auto">
-                {/* Category Filter */}
-                <div className="flex items-center space-x-2 w-full lg:w-auto">
-                  <Filter className="flex-shrink-0 w-5 h-5 text-gray-600" />
-                  {/* Mobile Category Dropdown */}
-                  <div className="relative w-full lg:hidden">
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => {
-                        setSelectedCategory(e.target.value);
-                        if (
-                          (selectedCategory !== "All" &&
-                            e.target.value === "All") ||
-                          (selectedCategory === "All" &&
-                            e.target.value !== "All")
-                        ) {
-                          setCurrentPage(1);
-                        }
-                      }}
-                      className="px-4 py-2 w-full bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat} ({categoryStats[cat] || 0})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
-                  </div>
-
-                  {/* Desktop Category Pills */}
-                  <div className="hidden overflow-x-auto p-1 max-w-2xl bg-gray-100 rounded-lg lg:flex scrollbar-hide">
-                    {categories.map((cat) => {
-                      // Define icons for each category
-                      const getCategoryIcon = (category) => {
-                        switch (category) {
-                          case "All":
-                            return Package;
-                          case "Animals":
-                            return Heart;
-                          case "Arabic Style 21k":
-                            return Crown;
-                          case "Bracelets":
-                            return Circle;
-                          case "Mine":
-                            return Gem;
-                          case "SET":
-                            return Star;
-                          case "Pendant":
-                            return Heart;
-                          case "Man Collection":
-                            return Shirt;
-                          case "Rings":
-                            return Circle;
-                          case "Earrings":
-                            return Star;
-                          default:
-                            return Package;
-                        }
-                      };
-                      const IconComponent = getCategoryIcon(cat);
-
-                      return (
-                        <button
-                          key={cat}
-                          onClick={() => {
-                            setSelectedCategory(cat);
-                            // Only reset to page 1 if switching from a filtered category to "All" or vice versa
-                            if (
-                              (selectedCategory !== "All" && cat === "All") ||
-                              (selectedCategory === "All" && cat !== "All")
-                            ) {
-                              setCurrentPage(1);
-                            }
-                          }}
-                          className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
-                            selectedCategory === cat
-                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md transform scale-105"
-                              : "text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm"
-                          }`}
-                        >
-                          <IconComponent className="flex-shrink-0 w-4 h-4" />
-                          <span>{cat}</span>
-                          <span className="text-xs opacity-75">
-                            ({categoryStats[cat] || 0})
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex p-1 bg-gray-100 rounded-lg">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded ${
-                      viewMode === "grid" ? "bg-white shadow-sm" : ""
-                    }`}
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 rounded ${
-                      viewMode === "list" ? "bg-white shadow-sm" : ""
-                    }`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
+        <header className="sticky top-0 z-30 p-4 bg-white/90 border-b border-gray-200 shadow-sm backdrop-blur lg:p-6">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2">
+              {activeTab === "catalog" && selectedCategory !== "All" && (
+                <button
+                  onClick={handleBackToCategories}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back to Categories
+                </button>
+              )}
+              <div className="text-base font-semibold text-gray-800">AT Jeweller</div>
+            </div>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Jewellery Catalog */}
           {activeTab === "catalog" && (
             <div className="space-y-6">
-              {/* Stats */}
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Showing {paginatedItems.length} of {filteredJewellery.length}{" "}
-                  items
-                  {selectedCategory !== "All" && ` in ${selectedCategory}`}
-                </div>
-              </div>
-
-              {/* Items Grid/List */}
-              {paginatedItems.length > 0 ? (
-                <>
+              {/* Categories Gallery (when All is selected) */}
+              {selectedCategory === "All" && !searchTerm && (
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
                   <div
-                    className={`grid gap-6 transition-all duration-300 ease-in-out hide-scrollbar animate-fade-in ${
-                      viewMode === "grid"
-                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        : "grid-cols-1"
-                    }`}
-                    style={{
-                      minHeight: "400px",
-                      maxHeight: "calc(100vh - 300px)",
-                      overflowY: "auto",
-                    }}
+                    className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
                   >
-                    {paginatedItems.map((item) => (
+                    {categories.slice(1).map((category) => (
                       <div
-                        key={item.id}
-                        className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift ${
-                          viewMode === "list" ? "flex" : ""
-                        }`}
+                        key={category}
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setCurrentPage(1);
+                        }}
+                        className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-md group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
                       >
-                        <div
-                          className={`${
-                            viewMode === "list" ? "w-32 h-32" : "aspect-square"
-                          } overflow-hidden`}
-                        >
+                        <div className="relative">
                           <img
-                            src={item.image}
-                            alt={item.name}
-                            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+                            src={getCategoryCover(category)}
+                            alt={category}
+                            className="object-cover w-full h-40 sm:h-52 md:h-60 transition-transform duration-500 group-hover:scale-105"
                           />
-                        </div>
-
-                        <div className="flex-1 p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h4 className="mb-1 text-xl font-bold leading-tight text-gray-900">
-                                {item.name}
-                              </h4>
-                              <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
-                                {item.category}
-                              </p>
-                            </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                          <div className="absolute top-3 left-3 text-xs px-2 py-1 rounded-full bg-white/85 text-gray-800">
+                            {Object.keys(categoryImages[category] || {}).length} subcategories
                           </div>
-
-                          <p className="mb-4 text-sm leading-relaxed text-gray-600">
-                            {item.description}
-                          </p>
-
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center p-1 space-x-2 bg-gray-50 rounded-lg">
-                              <button
-                                onClick={() =>
-                                  setBookingQuantities({
-                                    ...bookingQuantities,
-                                    [item.id]: Math.max(
-                                      1,
-                                      (bookingQuantities[item.id] || 1) - 1
-                                    ),
-                                  })
-                                }
-                                className="flex justify-center items-center w-8 h-8 text-gray-600 rounded hover:text-gray-800 hover:bg-white"
-                              >
-                                -
-                              </button>
-                              <span className="w-8 font-medium text-center">
-                                {bookingQuantities[item.id] || 1}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  setBookingQuantities({
-                                    ...bookingQuantities,
-                                    [item.id]: Math.min(
-                                      item.quantity,
-                                      (bookingQuantities[item.id] || 1) + 1
-                                    ),
-                                  })
-                                }
-                                className="flex justify-center items-center w-8 h-8 text-gray-600 rounded hover:text-gray-800 hover:bg-white"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button
-                              onClick={() =>
-                                addToCart(item, bookingQuantities[item.id] || 1)
-                              }
-                              className="px-4 py-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600"
-                            >
-                              Add to Cart
-                            </button>
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="text-white text-lg font-bold">{category}</h3>
+                            <p className="text-white/80 text-xs">Tap to view collection</p>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-8 space-x-2">
-                      {/* First Button */}
-                      <button
-                        onClick={() => setCurrentPage(1)}
-                        disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="First Page"
-                      >
-                        First
-                      </button>
+              {/* Stats (only when searching across all items) */}
+              {selectedCategory === "All" && !!searchTerm && (
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    Showing {paginatedItems.length} of {filteredJewellery.length} items
+                  </div>
+                </div>
+              )}
 
-                      {/* Previous Button */}
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(1, prev - 1))
-                        }
-                        disabled={currentPage === 1}
-                        className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
+              {/* Category view (admin-like) when a specific category is selected */}
+              {selectedCategory !== "All" && (
+                <div className="space-y-6">
+                  <div className="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
+                    <div className="p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h2 className="text-xl font-bold text-gray-900">{selectedCategory} Gallery</h2>
+                          <p className="text-gray-600">Explore our {selectedCategory.toLowerCase()} collection</p>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {Object.keys(categoryImages[selectedCategory] || {}).length} subcategories
+                        </div>
+                      </div>
 
-                      {/* Page Numbers */}
-                      {[...Array(totalPages)].map((_, i) => (
-                        <button
-                          key={i + 1}
-                          onClick={() => setCurrentPage(i + 1)}
-                          className={`px-4 py-2 rounded-lg ${
-                            currentPage === i + 1
-                              ? "bg-amber-500 text-white"
-                              : "border border-gray-300 hover:bg-gray-50"
+                      <Subcategories
+                        selectedCategory={selectedCategory}
+                        categoryImages={categoryImages}
+                        setCategoryImages={setCategoryImages}
+                        setSelectedCategory={setSelectedCategory}
+                        showActions={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Items Grid/List only for search results across all */}
+              {selectedCategory === "All" && !!searchTerm && (
+                paginatedItems.length > 0 ? (
+                  <>
+                    <div
+                      className={`grid gap-4 sm:gap-6 transition-all duration-300 ease-in-out animate-fade-in ${
+                        viewMode === "grid"
+                          ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                          : "grid-cols-1"
+                      }`}
+                    >
+                      {paginatedItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift ${
+                            viewMode === "list" ? "flex" : ""
                           }`}
                         >
-                          {i + 1}
-                        </button>
+                          <div
+                            className={`${
+                              viewMode === "list" ? "w-32 h-32" : "aspect-square"
+                            } overflow-hidden`}
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+                            />
+                          </div>
+
+                          <div className="flex-1 p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="mb-1 text-xl font-bold leading-tight text-gray-900">
+                                  {item.name}
+                                </h4>
+                                <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
+                                  {item.category}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="mb-4 text-sm leading-relaxed text-gray-600">
+                              {item.description}
+                            </p>
+
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center p-1 space-x-2 bg-gray-50 rounded-lg">
+                                <button
+                                  onClick={() =>
+                                    setBookingQuantities({
+                                      ...bookingQuantities,
+                                      [item.id]: Math.max(
+                                        1,
+                                        (bookingQuantities[item.id] || 1) - 1
+                                      ),
+                                    })
+                                  }
+                                  className="flex justify-center items-center w-8 h-8 text-gray-600 rounded hover:text-gray-800 hover:bg-white"
+                                >
+                                  -
+                                </button>
+                                <span className="w-8 font-medium text-center">
+                                  {bookingQuantities[item.id] || 1}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    setBookingQuantities({
+                                      ...bookingQuantities,
+                                      [item.id]: Math.min(
+                                        item.quantity,
+                                        (bookingQuantities[item.id] || 1) + 1
+                                      ),
+                                    })
+                                  }
+                                  className="flex justify-center items-center w-8 h-8 text-gray-600 rounded hover:text-gray-800 hover:bg-white"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <button
+                                onClick={() =>
+                                  addToCart(item, bookingQuantities[item.id] || 1)
+                                }
+                                className="px-4 py-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600"
+                              >
+                                Add to Cart
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       ))}
-
-                      {/* Next Button */}
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(totalPages, prev + 1)
-                          )
-                        }
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-
-                      {/* Last Button */}
-                      <button
-                        onClick={() => setCurrentPage(totalPages)}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Last Page"
-                      >
-                        Last
-                      </button>
                     </div>
-                  )}
-                </>
-              ) : (
-                <div className="py-16 text-center">
-                  <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
-                  <h3 className="mb-2 text-lg font-medium text-gray-900">
-                    No items found
-                  </h3>
-                  <p className="text-gray-500">
-                    {searchTerm
-                      ? `No items match "${searchTerm}"`
-                      : selectedCategory !== "All"
-                      ? `No items in ${selectedCategory} category`
-                      : "No jewellery items added yet"}
-                  </p>
-                </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center items-center mt-8 space-x-2">
+                        {/* First Button */}
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="First Page"
+                        >
+                          First
+                        </button>
+
+                        {/* Previous Button */}
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(1, prev - 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+
+                        {/* Page Numbers */}
+                        {[...Array(totalPages)].map((_, i) => (
+                          <button
+                            key={i + 1}
+                            onClick={() => setCurrentPage(i + 1)}
+                            className={`px-4 py-2 rounded-lg ${
+                              currentPage === i + 1
+                                ? "bg-amber-500 text-white"
+                                : "border border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+
+                        {/* Next Button */}
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(totalPages, prev + 1)
+                            )
+                          }
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+
+                        {/* Last Button */}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Last Page"
+                        >
+                          Last
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-16 text-center">
+                    <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">No items found</h3>
+                    <p className="text-gray-500">
+                      {searchTerm
+                        ? `No items match "${searchTerm}"`
+                        : "No jewellery items added yet"}
+                    </p>
+                  </div>
+                )
               )}
             </div>
           )}

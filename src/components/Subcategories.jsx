@@ -6,6 +6,7 @@ const Subcategories = ({
   categoryImages,
   setCategoryImages,
   setSelectedCategory,
+  showActions = true,
 }) => {
   const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
@@ -126,28 +127,32 @@ const Subcategories = ({
               </div>
               
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                <button
-                  onClick={() => setShowAddSubcategoryModal(true)}
-                  className="relative px-4 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg transition-all duration-300 group sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-2xl hover:scale-105 active:scale-95"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl opacity-0 transition-opacity duration-300 sm:rounded-2xl group-hover:opacity-100"></div>
-                  <div className="flex relative gap-2 justify-center items-center sm:gap-3">
-                    <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="text-sm sm:text-base">Add Subcategory</span>
-                  </div>
-                </button>
+                {showActions && (
+                  <>
+                    <button
+                      onClick={() => setShowAddSubcategoryModal(true)}
+                      className="relative px-4 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg transition-all duration-300 group sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-2xl hover:scale-105 active:scale-95"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl opacity-0 transition-opacity duration-300 sm:rounded-2xl group-hover:opacity-100"></div>
+                      <div className="flex relative gap-2 justify-center items-center sm:gap-3">
+                        <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="text-sm sm:text-base">Add Subcategory</span>
+                      </div>
+                    </button>
 
-                <button
-                  onClick={() => setShowAddPhotoModal(true)}
-                  disabled={!selectedSubcategory}
-                  className="relative px-4 py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg transition-all duration-300 group sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl opacity-0 transition-opacity duration-300 sm:rounded-2xl group-hover:opacity-100"></div>
-                  <div className="flex relative gap-2 justify-center items-center sm:gap-3">
-                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="text-sm sm:text-base">Add Photo</span>
-                  </div>
-                </button>
+                    <button
+                      onClick={() => setShowAddPhotoModal(true)}
+                      disabled={!selectedSubcategory}
+                      className="relative px-4 py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg transition-all duration-300 group sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl opacity-0 transition-opacity duration-300 sm:rounded-2xl group-hover:opacity-100"></div>
+                      <div className="flex relative gap-2 justify-center items-center sm:gap-3">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="text-sm sm:text-base">Add Photo</span>
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -221,12 +226,14 @@ const Subcategories = ({
             <p className="px-4 mx-auto mb-6 max-w-md text-sm text-gray-600 sm:text-base sm:mb-8">
               This collection is waiting for its first masterpiece. Start building your gallery today!
             </p>
-            <button
-              onClick={() => setShowAddPhotoModal(true)}
-              className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-lg transition-all duration-300 transform sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-xl hover:scale-105 sm:text-base"
-            >
-              Add First Photo
-            </button>
+            {showActions && (
+              <button
+                onClick={() => setShowAddPhotoModal(true)}
+                className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-lg transition-all duration-300 transform sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-xl hover:scale-105 sm:text-base"
+              >
+                Add First Photo
+              </button>
+            )}
           </div>
         )}
 
@@ -243,12 +250,14 @@ const Subcategories = ({
             <p className="px-4 mx-auto mb-6 max-w-md text-sm text-gray-600 sm:text-base sm:mb-8">
               Create your first subcategory to organize your {selectedCategory.toLowerCase()} photos.
             </p>
-            <button
-              onClick={() => setShowAddSubcategoryModal(true)}
-              className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-lg transition-all duration-300 transform sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-xl hover:scale-105 sm:text-base"
-            >
-              Create Subcategory
-            </button>
+            {showActions && (
+              <button
+                onClick={() => setShowAddSubcategoryModal(true)}
+                className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-lg transition-all duration-300 transform sm:px-8 sm:py-4 sm:rounded-2xl hover:shadow-xl hover:scale-105 sm:text-base"
+              >
+                Create Subcategory
+              </button>
+            )}
           </div>
         )}
 
@@ -319,7 +328,7 @@ const Subcategories = ({
         )}
 
         {/* Add Subcategory Modal */}
-        {showAddSubcategoryModal && (
+        {showActions && showAddSubcategoryModal && (
           <div className="flex fixed inset-0 z-50 justify-center items-center p-3 backdrop-blur-sm sm:p-4 bg-black/50">
             <div className="overflow-hidden w-full max-w-md bg-white rounded-2xl shadow-2xl sm:rounded-3xl">
               <div className="p-4 text-white bg-gradient-to-r from-green-500 to-emerald-500 sm:p-6">
@@ -371,7 +380,7 @@ const Subcategories = ({
         )}
 
         {/* Add Photo Modal */}
-        {showAddPhotoModal && (
+        {showActions && showAddPhotoModal && (
           <div className="flex fixed inset-0 z-50 justify-center items-center p-3 backdrop-blur-sm sm:p-4 bg-black/50">
             <div className="overflow-hidden w-full max-w-md bg-white rounded-2xl shadow-2xl sm:rounded-3xl">
               <div className="p-4 text-white bg-gradient-to-r from-blue-500 to-purple-500 sm:p-6">
