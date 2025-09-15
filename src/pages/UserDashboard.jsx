@@ -151,11 +151,13 @@ const UserDashboard = () => {
     price: "",
     image: "",
     quantity: 1,
+    weight: "",
   });
 
   const [activeTab, setActiveTab] = useState("catalog");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [cart, setCart] = useState([]);
+  const [myOrders, setMyOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [sortBy, setSortBy] = useState("name");
@@ -237,56 +239,217 @@ const UserDashboard = () => {
   // Category images with subcategories (mirrors AdminCategoryPage)
   const [categoryImages, setCategoryImages] = useState({
     Animals: {
-      Lion: [asset("download.jpg"), asset("download (1).jpg")],
-      Tiger: [asset("download (2).jpg")],
-      Elephant: [asset("download (3).jpg")],
+      Lion: [
+        {
+          url: asset("download.jpg"),
+          description: "Beautiful lion pendant with intricate detailing",
+          weight: "15g",
+        },
+        {
+          url: asset("download (1).jpg"),
+          description: "Elegant lion necklace showcasing craftsmanship",
+          weight: "20g",
+        },
+      ],
+      Tiger: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Stunning tiger brooch with vibrant colors",
+          weight: "18g",
+        },
+      ],
+      Elephant: [
+        {
+          url: asset("download (3).jpg"),
+          description: "Majestic elephant ring symbolizing wisdom",
+          weight: "25g",
+        },
+      ],
     },
     "Arabic Style 21k": {
-      Necklace: [asset("download (2).jpg")],
-      Bracelet: [asset("images.jpg")],
-      Ring: [asset("download (3).jpg")],
+      Necklace: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Traditional Arabic necklace in 21k gold",
+          weight: "30g",
+        },
+      ],
+      Bracelet: [
+        {
+          url: asset("images.jpg"),
+          description: "Elegant Arabic bracelet with cultural motifs",
+          weight: "22g",
+        },
+      ],
+      Ring: [
+        {
+          url: asset("download (3).jpg"),
+          description: "Authentic Arabic style ring design",
+          weight: "12g",
+        },
+      ],
     },
     Rings: {
-      Diamond: [asset("download (1).jpg")],
-      Sapphire: [asset("download (2).jpg")],
-      Ruby: [asset("download (3).jpg")],
+      Diamond: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Sparkling diamond ring with premium cut",
+          weight: "8g",
+        },
+      ],
+      Sapphire: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Beautiful sapphire ring with blue brilliance",
+          weight: "10g",
+        },
+      ],
+      Ruby: [
+        {
+          url: asset("download (3).jpg"),
+          description: "Vivid ruby ring showcasing deep red color",
+          weight: "9g",
+        },
+      ],
     },
     Earrings: {
-      Pearl: [asset("images.jpg")],
-      Gold: [asset("download.jpg")],
-      Diamond: [asset("download (1).jpg")],
+      Pearl: [
+        {
+          url: asset("images.jpg"),
+          description: "Classic pearl earrings with timeless appeal",
+          weight: "6g",
+        },
+      ],
+      Gold: [
+        {
+          url: asset("download.jpg"),
+          description: "Solid gold earrings with modern design",
+          weight: "14g",
+        },
+      ],
+      Diamond: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Diamond stud earrings for elegance",
+          weight: "5g",
+        },
+      ],
     },
     Bracelets: {
-      Silver: [asset("images.jpg")],
-      Gold: [asset("download (2).jpg")],
-      Beaded: [asset("download.jpg")],
+      Silver: [
+        {
+          url: asset("images.jpg"),
+          description: "Sterling silver bracelet with sleek finish",
+          weight: "16g",
+        },
+      ],
+      Gold: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Luxurious gold bracelet for special occasions",
+          weight: "28g",
+        },
+      ],
+      Beaded: [
+        {
+          url: asset("download.jpg"),
+          description: "Colorful beaded bracelet with unique patterns",
+          weight: "11g",
+        },
+      ],
     },
     Pendant: {
-      Heart: [asset("download (1).jpg")],
-      Cross: [asset("download (2).jpg")],
-      Star: [asset("download (3).jpg")],
+      Heart: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Romantic heart pendant with delicate chain",
+          weight: "7g",
+        },
+      ],
+      Cross: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Elegant cross pendant with spiritual meaning",
+          weight: "13g",
+        },
+      ],
+      Star: [
+        {
+          url: asset("download (3).jpg"),
+          description: "Shining star pendant for celestial beauty",
+          weight: "9g",
+        },
+      ],
     },
     "Man Collection": {
-      Chain: [asset("images.jpg")],
-      Bracelet: [asset("download.jpg")],
-      Ring: [asset("download (1).jpg")],
+      Chain: [
+        {
+          url: asset("images.jpg"),
+          description: "Stylish men's chain with rugged design",
+          weight: "35g",
+        },
+      ],
+      Bracelet: [
+        {
+          url: asset("download.jpg"),
+          description: "Masculine bracelet with bold links",
+          weight: "24g",
+        },
+      ],
+      Ring: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Men's ring with sophisticated engraving",
+          weight: "17g",
+        },
+      ],
     },
     SET: {
-      Gold: [asset("download (3).jpg")],
-      Diamond: [asset("images.jpg")],
-      Silver: [asset("download.jpg")],
+      Gold: [
+        {
+          url: asset("download (3).jpg"),
+          description: "Complete gold jewelry set for elegance",
+          weight: "45g",
+        },
+      ],
+      Diamond: [
+        {
+          url: asset("images.jpg"),
+          description: "Diamond jewelry set with sparkling gems",
+          weight: "32g",
+        },
+      ],
+      Silver: [
+        {
+          url: asset("download.jpg"),
+          description: "Silver jewelry set with versatile appeal",
+          weight: "38g",
+        },
+      ],
     },
     Mine: {
-      Diamond: [asset("download (1).jpg")],
-      Ruby: [asset("download (2).jpg")],
+      Diamond: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Premium mined diamond with exceptional clarity",
+          weight: "4g",
+        },
+      ],
+      Ruby: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Vivid ruby from natural mines",
+          weight: "6g",
+        },
+      ],
     },
   });
 
   const getCategoryCover = (category) => {
     const group = categoryImages[category] || {};
     const firstKey = Object.keys(group)[0];
-    const imgs = (group[firstKey] || []);
-    return imgs[0] || asset("download.jpg");
+    const imgs = group[firstKey] || [];
+    return imgs[0]?.url || asset("download.jpg");
   };
 
   // Category stats
@@ -365,15 +528,38 @@ const UserDashboard = () => {
     cart.reduce((total, item) => total + item.quantity, 0);
 
   const confirmOrder = () => {
-    // Store booking data for admin to see
-    cart.forEach((item) => {
-      addBooking({
-        userName: user?.name || "Guest User",
-        category: item.category,
-        jewelleryName: item.name,
-        quantity: item.quantity,
-        userId: user?.id || "guest",
+    console.log('Confirming order, cart:', cart);
+
+    // Store booking data for admin to see (if available)
+    if (addBooking) {
+      cart.forEach((item) => {
+        addBooking({
+          userName: user?.name || "Guest User",
+          category: item.category,
+          jewelleryName: item.name,
+          quantity: item.quantity,
+          userId: user?.id || "guest",
+        });
       });
+    }
+
+    // Add to user's orders
+    const newBookings = cart.map((item, index) => ({
+      id: `${Date.now()}-${index}`,
+      jewelleryName: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      bookingDate: new Date().toISOString(),
+      status: "Confirmed"
+    }));
+
+    console.log('New bookings:', newBookings);
+
+    setMyOrders(prev => {
+      console.log('Previous bookings:', prev);
+      const updated = [...prev, ...newBookings];
+      console.log('Updated bookings:', updated);
+      return updated;
     });
 
     alert(`Order confirmed! ${getCartItemCount()} items booked successfully.`);
@@ -436,6 +622,7 @@ const UserDashboard = () => {
       price: "",
       image: "",
       quantity: 1,
+      weight: "",
     });
     setImagePreview("");
     setShowAddModal(false);
@@ -451,6 +638,7 @@ const UserDashboard = () => {
       price: item.price.toString(),
       image: item.image,
       quantity: item.quantity,
+      weight: item.weight || "",
     });
     setShowAddModal(true);
   };
@@ -469,7 +657,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="flex pb-28 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-y-auto overflow-x-hidden scrollbar-hide">
+    <div className="flex overflow-y-auto overflow-x-hidden pb-28 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 scrollbar-hide">
       {/* Mobile Menu Button */}
       {!sidebarOpen && (
         <button
@@ -547,7 +735,9 @@ const UserDashboard = () => {
                   title={tab.label}
                 >
                   <tab.icon className="flex-shrink-0 w-5 h-5" />
-                  <span className="truncate whitespace-nowrap">{tab.label}</span>
+                  <span className="truncate whitespace-nowrap">
+                    {tab.label}
+                  </span>
                 </button>
               </div>
             ))}
@@ -625,35 +815,37 @@ const UserDashboard = () => {
         style={{ scrollBehavior: "auto" }}
       >
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 p-4 bg-white/90 border-b border-gray-200 shadow-sm backdrop-blur lg:p-6">
-          <div className="flex justify-between items-center gap-2">
-            <div className="flex items-center gap-2">
+        <header className="sticky top-0 z-30 p-4 border-b border-gray-200 shadow-sm backdrop-blur bg-white/90 lg:p-6">
+          <div className="flex gap-2 justify-between items-center">
+            <div className="flex gap-2 items-center">
               {activeTab === "catalog" && selectedCategory !== "All" && (
                 <button
                   onClick={handleBackToCategories}
                   className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
                 >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  <ChevronLeft className="mr-1 w-4 h-4" />
                   Back to Categories
                 </button>
               )}
-              <div className="text-base font-semibold text-gray-800">AT Jeweller</div>
+              <div className="text-base font-semibold text-gray-800">
+                AT Jeweller
+              </div>
             </div>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <main className="overflow-y-auto overflow-x-hidden flex-1 p-4 sm:p-6 scrollbar-hide">
           {/* Jewellery Catalog */}
           {activeTab === "catalog" && (
             <div className="space-y-6">
               {/* Categories Gallery (when All is selected) */}
               {selectedCategory === "All" && !searchTerm && (
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
-                  <div
-                    className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
-                  >
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Categories
+                  </h2>
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
                     {categories.slice(1).map((category) => (
                       <div
                         key={category}
@@ -661,21 +853,26 @@ const UserDashboard = () => {
                           setSelectedCategory(category);
                           setCurrentPage(1);
                         }}
-                        className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-md group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+                        className="overflow-hidden relative rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
                       >
                         <div className="relative">
                           <img
                             src={getCategoryCover(category)}
                             alt={category}
-                            className="object-cover w-full h-40 sm:h-52 md:h-60 transition-transform duration-500 group-hover:scale-105"
+                            className="object-cover w-full h-40 transition-transform duration-500 sm:h-52 md:h-60 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                          <div className="absolute top-3 left-3 text-xs px-2 py-1 rounded-full bg-white/85 text-gray-800">
-                            {Object.keys(categoryImages[category] || {}).length} subcategories
+                          <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10" />
+                          <div className="absolute top-3 left-3 px-2 py-1 text-xs text-gray-800 rounded-full bg-white/85">
+                            {Object.keys(categoryImages[category] || {}).length}{" "}
+                            subcategories
                           </div>
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="text-white text-lg font-bold">{category}</h3>
-                            <p className="text-white/80 text-xs">Tap to view collection</p>
+                          <div className="absolute right-0 bottom-0 left-0 p-4">
+                            <h3 className="text-lg font-bold text-white">
+                              {category}
+                            </h3>
+                            <p className="text-xs text-white/80">
+                              Tap to view collection
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -688,7 +885,8 @@ const UserDashboard = () => {
               {selectedCategory === "All" && !!searchTerm && (
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-gray-600">
-                    Showing {paginatedItems.length} of {filteredJewellery.length} items
+                    Showing {paginatedItems.length} of{" "}
+                    {filteredJewellery.length} items
                   </div>
                 </div>
               )}
@@ -700,11 +898,20 @@ const UserDashboard = () => {
                     <div className="p-6">
                       <div className="flex justify-between items-center mb-4">
                         <div>
-                          <h2 className="text-xl font-bold text-gray-900">{selectedCategory} Gallery</h2>
-                          <p className="text-gray-600">Explore our {selectedCategory.toLowerCase()} collection</p>
+                          <h2 className="text-xl font-bold text-gray-900">
+                            {selectedCategory} Gallery
+                          </h2>
+                          <p className="text-gray-600">
+                            Explore our {selectedCategory.toLowerCase()}{" "}
+                            collection
+                          </p>
                         </div>
                         <div className="text-sm text-gray-500">
-                          {Object.keys(categoryImages[selectedCategory] || {}).length} subcategories
+                          {
+                            Object.keys(categoryImages[selectedCategory] || {})
+                              .length
+                          }{" "}
+                          subcategories
                         </div>
                       </div>
 
@@ -714,6 +921,7 @@ const UserDashboard = () => {
                         setCategoryImages={setCategoryImages}
                         setSelectedCategory={setSelectedCategory}
                         showActions={false}
+                        addToCart={addToCart}
                       />
                     </div>
                   </div>
@@ -721,8 +929,9 @@ const UserDashboard = () => {
               )}
 
               {/* Items Grid/List only for search results across all */}
-              {selectedCategory === "All" && !!searchTerm && (
-                paginatedItems.length > 0 ? (
+              {selectedCategory === "All" &&
+                !!searchTerm &&
+                (paginatedItems.length > 0 ? (
                   <>
                     <div
                       className={`grid gap-4 sm:gap-6 transition-all duration-300 ease-in-out animate-fade-in ${
@@ -740,7 +949,9 @@ const UserDashboard = () => {
                         >
                           <div
                             className={`${
-                              viewMode === "list" ? "w-32 h-32" : "aspect-square"
+                              viewMode === "list"
+                                ? "w-32 h-32"
+                                : "aspect-square"
                             } overflow-hidden`}
                           >
                             <img
@@ -764,6 +975,7 @@ const UserDashboard = () => {
 
                             <p className="mb-4 text-sm leading-relaxed text-gray-600">
                               {item.description}
+                              {item.weight && ` | Weight: ${item.weight}g`}
                             </p>
 
                             <div className="flex items-center space-x-3">
@@ -802,7 +1014,10 @@ const UserDashboard = () => {
                               </div>
                               <button
                                 onClick={() =>
-                                  addToCart(item, bookingQuantities[item.id] || 1)
+                                  addToCart(
+                                    item,
+                                    bookingQuantities[item.id] || 1
+                                  )
                                 }
                                 className="px-4 py-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600"
                               >
@@ -881,15 +1096,16 @@ const UserDashboard = () => {
                 ) : (
                   <div className="py-16 text-center">
                     <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
-                    <h3 className="mb-2 text-lg font-medium text-gray-900">No items found</h3>
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">
+                      No items found
+                    </h3>
                     <p className="text-gray-500">
                       {searchTerm
                         ? `No items match "${searchTerm}"`
                         : "No jewellery items added yet"}
                     </p>
                   </div>
-                )
-              )}
+                ))}
             </div>
           )}
 
@@ -1025,13 +1241,13 @@ const UserDashboard = () => {
                 </h2>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Calendar className="w-4 h-4" />
-                  <span>{userBookings.length} total orders</span>
+                  <span>{myOrders.length} total orders</span>
                 </div>
               </div>
 
-              {userBookings.length > 0 ? (
+              {myOrders.length > 0 ? (
                 <div className="space-y-4">
-                  {userBookings.map((booking, index) => (
+                  {myOrders.map((booking, index) => (
                     <div
                       key={booking.id}
                       className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-lg"
@@ -1239,6 +1455,27 @@ const UserDashboard = () => {
                     min="1"
                     className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     required
+                  />
+                </div>
+
+                {/* Weight */}
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Weight (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={newJewellery.weight}
+                    onChange={(e) =>
+                      setNewJewellery({
+                        ...newJewellery,
+                        weight: e.target.value,
+                      })
+                    }
+                    min="0"
+                    step="0.1"
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    placeholder="Weight in grams"
                   />
                 </div>
               </div>

@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Plus, X, ChevronLeft, ChevronRight, Camera, Image, FolderPlus, Edit3 } from "lucide-react";
+import {
+  Plus,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Camera,
+  Image,
+  FolderPlus,
+  Edit3,
+  ShoppingCart,
+} from "lucide-react";
 
 const Subcategories = ({
   selectedCategory,
@@ -7,19 +17,53 @@ const Subcategories = ({
   setCategoryImages,
   setSelectedCategory,
   showActions = true,
+  addToCart,
 }) => {
   const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
   const [newSubcategoryImage, setNewSubcategoryImage] = useState("");
   const [newSubcategoryName, setNewSubcategoryName] = useState("");
   const [newPhotoDescription, setNewPhotoDescription] = useState("");
+  const [newPhotoWeight, setNewPhotoWeight] = useState("");
   const subcategories = Object.keys(categoryImages[selectedCategory] || {});
   const [selectedSubcategory, setSelectedSubcategory] = useState(
     subcategories[0] || null
   );
+  const [sortBy, setSortBy] = useState("weight");
+  const [minWeight, setMinWeight] = useState("");
+  const [maxWeight, setMaxWeight] = useState("");
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const images = (categoryImages[selectedCategory]?.[selectedSubcategory] || []);
+  const images = categoryImages[selectedCategory]?.[selectedSubcategory] || [];
+
+  // Handle both old string format and new object format for images
+  const getImageUrl = (img) => (typeof img === "string" ? img : img.url);
+  const getImageDescription = (img) => {
+    if (typeof img === "string") return "No description";
+    const desc = img.description || "No description";
+    const weight = img.weight ? ` | Weight: ${img.weight}` : "";
+    return desc + weight;
+  };
+
+  const filteredImages = images.filter((img) => {
+    const weightStr = typeof img === "string" ? "" : img.weight || "";
+    const weightNum = parseFloat(weightStr.replace("g", "")) || 0;
+    const min = minWeight ? parseFloat(minWeight) : 0;
+    const max = maxWeight ? parseFloat(maxWeight) : Infinity;
+    return weightNum >= min && weightNum <= max;
+  });
+
+  const sortedImages = [...filteredImages].sort((a, b) => {
+    const aWeight = typeof a === "string" ? "" : a.weight || "";
+
+    const bWeight = typeof b === "string" ? "" : b.weight || "";
+
+    const aNum = parseFloat(aWeight.replace("g", "")) || 0;
+
+    const bNum = parseFloat(bWeight.replace("g", "")) || 0;
+
+    return aNum - bNum;
+  });
 
   const handleSubcategoryFileUpload = (e) => {
     const file = e.target.files[0];
@@ -53,8 +97,11 @@ const Subcategories = ({
     if (newSubcategoryImage && selectedCategory && selectedSubcategory) {
       const photoData = {
         url: newSubcategoryImage,
-        description: newPhotoDescription.trim() || `Beautiful ${selectedSubcategory} photo`,
-        timestamp: new Date().toISOString()
+        description:
+          newPhotoDescription.trim() ||
+          `Beautiful ${selectedSubcategory} photo`,
+        weight: newPhotoWeight.trim() || "",
+        timestamp: new Date().toISOString(),
       };
 
       setCategoryImages({
@@ -80,6 +127,7 @@ const Subcategories = ({
   const resetPhotoForm = () => {
     setNewSubcategoryImage("");
     setNewPhotoDescription("");
+    setNewPhotoWeight("");
     setShowAddPhotoModal(false);
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach((input) => (input.value = ""));
@@ -91,17 +139,16 @@ const Subcategories = ({
   };
 
   const closeLightbox = () => setIsLightboxOpen(false);
-  const prevImage = () => setLightboxIndex((prev) => (prev - 1 + images.length) % images.length);
-  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % images.length);
-
-  // Handle both old string format and new object format for images
-  const getImageUrl = (img) => typeof img === 'string' ? img : img.url;
-  const getImageDescription = (img) => typeof img === 'string' ? 'No description' : (img.description || 'No description');
+  const prevImage = () =>
+    setLightboxIndex(
+      (prev) => (prev - 1 + sortedImages.length) % sortedImages.length
+    );
+  const nextImage = () =>
+    setLightboxIndex((prev) => (prev + 1) % sortedImages.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <div className="px-3 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8 sm:py-8">
-        
         {/* Header Section */}
         <div className="relative mb-6 sm:mb-12">
           <div className="absolute inset-0 bg-gradient-to-r rounded-2xl blur-xl from-blue-600/10 via-purple-600/10 to-pink-600/10 sm:rounded-3xl"></div>
@@ -112,12 +159,13 @@ const Subcategories = ({
                   {selectedCategory} Gallery
                 </h1>
                 <p className="max-w-2xl text-sm text-gray-600 sm:text-lg">
-                  Discover our curated collection of stunning {selectedCategory.toLowerCase()} photography
+                  Discover our curated collection of stunning{" "}
+                  {selectedCategory.toLowerCase()} photography
                 </p>
                 <div className="flex flex-wrap gap-3 items-center text-xs text-gray-500 sm:gap-4 sm:text-sm">
                   <div className="flex gap-2 items-center">
                     <Image className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{images.length} photos</span>
+                    <span>{sortedImages.length} photos</span>
                   </div>
                   <div className="flex gap-2 items-center">
                     <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -125,7 +173,7 @@ const Subcategories = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                 {showActions && (
                   <>
@@ -136,7 +184,9 @@ const Subcategories = ({
                       <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl opacity-0 transition-opacity duration-300 sm:rounded-2xl group-hover:opacity-100"></div>
                       <div className="flex relative gap-2 justify-center items-center sm:gap-3">
                         <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="text-sm sm:text-base">Add Subcategory</span>
+                        <span className="text-sm sm:text-base">
+                          Add Subcategory
+                        </span>
                       </div>
                     </button>
 
@@ -153,6 +203,45 @@ const Subcategories = ({
                     </button>
                   </>
                 )}
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                <div className="flex gap-2 items-center">
+                  <label className="text-sm font-medium text-gray-700">
+                    Sort by:
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="weight">Weight</option>
+                  </select>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <label className="text-sm font-medium text-gray-700">
+                    Min Weight (g):
+                  </label>
+                  <input
+                    type="number"
+                    value={minWeight}
+                    onChange={(e) => setMinWeight(e.target.value)}
+                    placeholder="0"
+                    className="px-2 py-1 text-sm rounded border border-gray-300"
+                  />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <label className="text-sm font-medium text-gray-700">
+                    Max Weight (g):
+                  </label>
+                  <input
+                    type="number"
+                    value={maxWeight}
+                    onChange={(e) => setMaxWeight(e.target.value)}
+                    placeholder="100"
+                    className="px-2 py-1 text-sm rounded border border-gray-300"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -190,7 +279,7 @@ const Subcategories = ({
 
         {/* Photo Grid */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6">
-          {images.map((img, idx) => (
+          {sortedImages.map((img, idx) => (
             <div
               key={idx}
               className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
@@ -205,9 +294,38 @@ const Subcategories = ({
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 from-black/70 group-hover:opacity-100"></div>
-              <div className="absolute right-0 bottom-0 left-0 p-3 text-white transition-transform duration-300 transform translate-y-full sm:p-4 group-hover:translate-y-0">
-                <h3 className="text-sm font-semibold truncate sm:text-lg">{selectedSubcategory}</h3>
-                <p className="text-xs opacity-90 sm:text-sm line-clamp-2">{getImageDescription(img)}</p>
+              <div className="absolute right-0 bottom-0 left-0 p-3 text-white transition-transform duration-300 transform translate-y-0 md:translate-y-full md:group-hover:translate-y-0 sm:p-4">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h3 className="text-sm font-semibold truncate sm:text-lg">
+                      {selectedSubcategory}
+                    </h3>
+                    <p className="text-xs opacity-90 sm:text-sm line-clamp-2">
+                      {getImageDescription(img)}
+                    </p>
+                  </div>
+                  {addToCart && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const item = {
+                          id: `${selectedCategory}-${selectedSubcategory}-${idx}`,
+                          name: selectedSubcategory,
+                          description: getImageDescription(img),
+                          image: getImageUrl(img),
+                          category: selectedCategory,
+                          price: 0,
+                          quantity: 1,
+                          weight: img.weight || "",
+                        };
+                        addToCart(item, 1);
+                      }}
+                      className="p-2 rounded-full transition-colors bg-white/20 hover:bg-white/30"
+                    >
+                      <ShoppingCart className="w-4 h-4 text-white" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -222,9 +340,12 @@ const Subcategories = ({
                 <Image className="w-8 h-8 text-white sm:w-12 sm:h-12" />
               </div>
             </div>
-            <h3 className="mb-3 text-xl font-bold text-gray-800 sm:text-2xl sm:mb-4">No Photos Yet</h3>
+            <h3 className="mb-3 text-xl font-bold text-gray-800 sm:text-2xl sm:mb-4">
+              No Photos Yet
+            </h3>
             <p className="px-4 mx-auto mb-6 max-w-md text-sm text-gray-600 sm:text-base sm:mb-8">
-              This collection is waiting for its first masterpiece. Start building your gallery today!
+              This collection is waiting for its first masterpiece. Start
+              building your gallery today!
             </p>
             {showActions && (
               <button
@@ -246,9 +367,12 @@ const Subcategories = ({
                 <FolderPlus className="w-8 h-8 text-white sm:w-12 sm:h-12" />
               </div>
             </div>
-            <h3 className="mb-3 text-xl font-bold text-gray-800 sm:text-2xl sm:mb-4">No Subcategories Yet</h3>
+            <h3 className="mb-3 text-xl font-bold text-gray-800 sm:text-2xl sm:mb-4">
+              No Subcategories Yet
+            </h3>
             <p className="px-4 mx-auto mb-6 max-w-md text-sm text-gray-600 sm:text-base sm:mb-8">
-              Create your first subcategory to organize your {selectedCategory.toLowerCase()} photos.
+              Create your first subcategory to organize your{" "}
+              {selectedCategory.toLowerCase()} photos.
             </p>
             {showActions && (
               <button
@@ -268,10 +392,14 @@ const Subcategories = ({
             <div className="absolute top-0 right-0 left-0 z-10 bg-gradient-to-b to-transparent from-black/80">
               <div className="flex justify-between items-center p-3 sm:p-6">
                 <div className="text-white">
-                  <h3 className="text-base font-semibold sm:text-lg">{selectedCategory} • {selectedSubcategory}</h3>
-                  <p className="text-xs opacity-75 sm:text-sm">Photo {lightboxIndex + 1} of {images.length}</p>
+                  <h3 className="text-base font-semibold sm:text-lg">
+                    {selectedCategory} • {selectedSubcategory}
+                  </h3>
+                  <p className="text-xs opacity-75 sm:text-sm">
+                    Photo {lightboxIndex + 1} of {sortedImages.length}
+                  </p>
                   <p className="mt-1 max-w-xs text-xs truncate opacity-75 sm:text-sm sm:max-w-md">
-                    {getImageDescription(images[lightboxIndex])}
+                    {getImageDescription(sortedImages[lightboxIndex])}
                   </p>
                 </div>
                 <button
@@ -293,8 +421,10 @@ const Subcategories = ({
               </button>
 
               <img
-                src={getImageUrl(images[lightboxIndex])}
-                alt={`${selectedCategory} ${selectedSubcategory} ${lightboxIndex + 1}`}
+                src={getImageUrl(sortedImages[lightboxIndex])}
+                alt={`${selectedCategory} ${selectedSubcategory} ${
+                  lightboxIndex + 1
+                }`}
                 className="object-contain max-w-full max-h-full rounded-lg shadow-2xl"
               />
 
@@ -309,17 +439,21 @@ const Subcategories = ({
             {/* Thumbnails */}
             <div className="absolute right-0 bottom-0 left-0 p-3 bg-gradient-to-t to-transparent from-black/80 sm:p-6">
               <div className="flex overflow-x-auto gap-2 justify-center pb-2 sm:gap-3">
-                {images.map((thumb, i) => (
+                {sortedImages.map((thumb, i) => (
                   <button
                     key={i}
                     onClick={() => setLightboxIndex(i)}
                     className={`flex-shrink-0 w-12 h-12 sm:w-20 sm:h-20 rounded-lg overflow-hidden transition-all ${
-                      i === lightboxIndex 
-                        ? 'ring-2 ring-white scale-110 shadow-xl' 
-                        : 'opacity-60 hover:opacity-100 hover:scale-105'
+                      i === lightboxIndex
+                        ? "ring-2 ring-white scale-110 shadow-xl"
+                        : "opacity-60 hover:opacity-100 hover:scale-105"
                     }`}
                   >
-                    <img src={getImageUrl(thumb)} alt={`Thumbnail ${i + 1}`} className="object-cover w-full h-full" />
+                    <img
+                      src={getImageUrl(thumb)}
+                      alt={`Thumbnail ${i + 1}`}
+                      className="object-cover w-full h-full"
+                    />
                   </button>
                 ))}
               </div>
@@ -333,7 +467,9 @@ const Subcategories = ({
             <div className="overflow-hidden w-full max-w-md bg-white rounded-2xl shadow-2xl sm:rounded-3xl">
               <div className="p-4 text-white bg-gradient-to-r from-green-500 to-emerald-500 sm:p-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold sm:text-2xl">Add Subcategory</h3>
+                  <h3 className="text-xl font-bold sm:text-2xl">
+                    Add Subcategory
+                  </h3>
                   <button
                     onClick={resetSubcategoryForm}
                     className="flex justify-center items-center w-8 h-8 rounded-full transition-colors sm:w-10 sm:h-10 bg-white/20 hover:bg-white/30"
@@ -341,7 +477,9 @@ const Subcategories = ({
                     <X className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
-                <p className="mt-2 text-sm opacity-90 sm:text-base">Create a new collection in {selectedCategory}</p>
+                <p className="mt-2 text-sm opacity-90 sm:text-base">
+                  Create a new collection in {selectedCategory}
+                </p>
               </div>
 
               <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
@@ -382,7 +520,7 @@ const Subcategories = ({
         {/* Add Photo Modal */}
         {showActions && showAddPhotoModal && (
           <div className="flex fixed inset-0 z-50 justify-center items-center p-3 backdrop-blur-sm sm:p-4 bg-black/50">
-            <div className="overflow-hidden w-full max-w-md bg-white rounded-2xl shadow-2xl sm:rounded-3xl">
+            <div className="overflow-hidden w-full max-w-md bg-white rounded-2xl shadow-2xl sm:rounded-3xl max-h-[70vh] overflow-y-auto">
               <div className="p-4 text-white bg-gradient-to-r from-blue-500 to-purple-500 sm:p-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xl font-bold sm:text-2xl">Add Photo</h3>
@@ -393,7 +531,9 @@ const Subcategories = ({
                     <X className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
-                <p className="mt-2 text-sm opacity-90 sm:text-base">Upload to {selectedCategory} • {selectedSubcategory}</p>
+                <p className="mt-2 text-sm opacity-90 sm:text-base">
+                  Upload to {selectedCategory} • {selectedSubcategory}
+                </p>
               </div>
 
               <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
@@ -411,8 +551,12 @@ const Subcategories = ({
                     />
                     <div className="p-4 text-center rounded-xl border-2 border-gray-300 border-dashed transition-colors sm:rounded-2xl sm:p-8 hover:border-blue-500 hover:bg-blue-50/50">
                       <Camera className="mx-auto mb-2 w-8 h-8 text-gray-400 sm:w-12 sm:h-12 sm:mb-4" />
-                      <p className="text-sm font-medium text-gray-600 sm:text-base">Click to upload photo</p>
-                      <p className="mt-1 text-xs text-gray-500 sm:text-sm">PNG, JPG, JPEG up to 10MB</p>
+                      <p className="text-sm font-medium text-gray-600 sm:text-base">
+                        Click to upload photo
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                        PNG, JPG, JPEG up to 10MB
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -430,9 +574,24 @@ const Subcategories = ({
                   />
                 </div>
 
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700 sm:mb-3">
+                    Weight
+                  </label>
+                  <input
+                    type="text"
+                    value={newPhotoWeight}
+                    onChange={(e) => setNewPhotoWeight(e.target.value)}
+                    placeholder="Enter weight (e.g., 10g, 5oz)"
+                    className="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 transition-all sm:px-4 sm:py-3 sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-base"
+                  />
+                </div>
+
                 {newSubcategoryImage && (
                   <div className="space-y-2 sm:space-y-3">
-                    <label className="block text-sm font-semibold text-gray-700">Preview</label>
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Preview
+                    </label>
                     <div className="overflow-hidden rounded-xl border-2 border-gray-200 sm:rounded-2xl">
                       <img
                         src={newSubcategoryImage}
