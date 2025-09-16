@@ -263,7 +263,7 @@ const Subcategories = ({
                     className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 text-xs sm:text-base ${
                       selectedSubcategory === sub
                         ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-green-500 hover:shadow-md"
                     }`}
                   >
                     <span className="block sm:inline">{sub}</span>
@@ -320,9 +320,9 @@ const Subcategories = ({
                         };
                         addToCart(item, 1);
                       }}
-                      className="p-2 rounded-full transition-colors bg-white/20 hover:bg-white/30"
+                      className="p-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg hover:shadow-xl border border-white/20"
                     >
-                      <ShoppingCart className="w-4 h-4 text-white" />
+                      <ShoppingCart className="w-6 h-6" />
                     </button>
                   )}
                 </div>

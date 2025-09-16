@@ -168,6 +168,7 @@ const UserDashboard = () => {
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [bookingQuantities, setBookingQuantities] = useState({});
   const [wishlist, setWishlist] = useState([]);
+  const [toast, setToast] = useState(null);
 
   const sortOptions = [
     { value: "name", label: "Name A-Z" },
@@ -209,20 +210,15 @@ const UserDashboard = () => {
     return () => mq.removeEventListener("change", handleChange);
   }, []);
 
+  // Auto-clear toast after duration
   useEffect(() => {
-    // Maintain scroll position when category changes
-    const currentScroll = window.pageYOffset;
-    const observer = new MutationObserver(() => {
-      if (window.pageYOffset !== currentScroll) {
-        window.scrollTo(0, currentScroll);
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  }, [selectedCategory]);
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, toast.duration);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // Categories pulled from JewelleryContext to stay perfectly in sync with catalogue
   const categories = getCategories();
@@ -493,8 +489,18 @@ const UserDashboard = () => {
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
     if (existingItem) {
       updateCartQuantity(item.id, existingItem.quantity + quantity);
+      setToast({
+        message: `Updated ${item.name} quantity in cart!`,
+        type: "success",
+        duration: 3000,
+      });
     } else {
       setCart([...cart, { ...item, quantity }]);
+      setToast({
+        message: `Added ${item.name} to cart!`,
+        type: "success",
+        duration: 3000,
+      });
     }
   };
 
@@ -562,8 +568,15 @@ const UserDashboard = () => {
       return updated;
     });
 
-    alert(`Order confirmed! ${getCartItemCount()} items booked successfully.`);
+    // Clear cart
     setCart([]);
+
+    // Show success toast
+    setToast({
+      message: `Order confirmed successfully! ${getCartItemCount()} items booked.`,
+      type: "success",
+      duration: 5000,
+    });
   };
 
   const handleQuantityChange = (itemId, quantity) => {
@@ -658,6 +671,21 @@ const UserDashboard = () => {
 
   return (
     <div className="flex overflow-y-auto overflow-x-hidden pb-28 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 scrollbar-hide">
+      <style jsx>{`
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
       {/* Mobile Menu Button */}
       {!sidebarOpen && (
         <button
@@ -1019,7 +1047,7 @@ const UserDashboard = () => {
                                     bookingQuantities[item.id] || 1
                                   )
                                 }
-                                className="px-4 py-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:from-amber-600 hover:to-orange-600"
+                                className="px-6 py-3 font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:shadow-xl"
                               >
                                 Add to Cart
                               </button>
@@ -1607,6 +1635,34 @@ const UserDashboard = () => {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-50 animate-slide-up">
+          <div
+            className={`flex items-center p-3 sm:p-4 rounded-xl shadow-lg border transition-all duration-300 ${
+              toast.type === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            }`}
+          >
+            <div className="flex items-center space-x-3 flex-1">
+              {toast.type === "success" ? (
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+              ) : (
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+              )}
+              <p className="font-medium text-xs sm:text-sm sm:text-base flex-1">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="ml-2 sm:ml-4 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+            >
+              <X className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
           </div>
         </div>
       )}
