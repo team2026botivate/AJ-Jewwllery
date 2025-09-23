@@ -870,7 +870,7 @@ const UserDashboard = () => {
       >
         {/* Top Bar */}
         <header className="sticky top-0 z-30 p-4 border-b border-gray-200 shadow-sm backdrop-blur bg-white/90 lg:p-6">
-          <div className="flex gap-2 justify-between items-center">
+          <div className="flex gap-2 justify-center lg:justify-between items-center">
             <div className="flex gap-2 items-center">
               {activeTab === "catalog" && selectedCategory !== "All" && (
                 <button
