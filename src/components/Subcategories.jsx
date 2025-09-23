@@ -23,7 +23,6 @@ const Subcategories = ({
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
   const [newSubcategoryImage, setNewSubcategoryImage] = useState("");
   const [newSubcategoryName, setNewSubcategoryName] = useState("");
-  const [newPhotoDescription, setNewPhotoDescription] = useState("");
   const [newPhotoWeight, setNewPhotoWeight] = useState("");
   const subcategories = Object.keys(categoryImages[selectedCategory] || {});
   const [selectedSubcategory, setSelectedSubcategory] = useState(
@@ -38,12 +37,6 @@ const Subcategories = ({
 
   // Handle both old string format and new object format for images
   const getImageUrl = (img) => (typeof img === "string" ? img : img.url);
-  const getImageDescription = (img) => {
-    if (typeof img === "string") return "No description";
-    const desc = img.description || "No description";
-    const weight = img.weight ? ` | Weight: ${img.weight}` : "";
-    return desc + weight;
-  };
 
   const filteredImages = images.filter((img) => {
     const weightStr = typeof img === "string" ? "" : img.weight || "";
@@ -55,14 +48,26 @@ const Subcategories = ({
 
   const sortedImages = [...filteredImages].sort((a, b) => {
     const aWeight = typeof a === "string" ? "" : a.weight || "";
-
     const bWeight = typeof b === "string" ? "" : b.weight || "";
-
     const aNum = parseFloat(aWeight.replace("g", "")) || 0;
-
     const bNum = parseFloat(bWeight.replace("g", "")) || 0;
 
-    return aNum - bNum;
+    const aName =
+      typeof a === "string" ? a : `${selectedCategory} ${selectedSubcategory}`;
+    const bName =
+      typeof b === "string" ? b : `${selectedCategory} ${selectedSubcategory}`;
+
+    switch (sortBy) {
+      case "weight-desc":
+        return bNum - aNum;
+      case "name":
+        return aName.localeCompare(bName);
+      case "name-desc":
+        return bName.localeCompare(aName);
+      case "weight":
+      default:
+        return aNum - bNum;
+    }
   });
 
   const handleSubcategoryFileUpload = (e) => {
@@ -97,9 +102,6 @@ const Subcategories = ({
     if (newSubcategoryImage && selectedCategory && selectedSubcategory) {
       const photoData = {
         url: newSubcategoryImage,
-        description:
-          newPhotoDescription.trim() ||
-          `Beautiful ${selectedSubcategory} photo`,
         weight: newPhotoWeight.trim() || "",
         timestamp: new Date().toISOString(),
       };
@@ -126,7 +128,6 @@ const Subcategories = ({
 
   const resetPhotoForm = () => {
     setNewSubcategoryImage("");
-    setNewPhotoDescription("");
     setNewPhotoWeight("");
     setShowAddPhotoModal(false);
     const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -156,22 +157,8 @@ const Subcategories = ({
             <div className="flex flex-col gap-4 sm:gap-6">
               <div className="space-y-2 sm:space-y-3">
                 <h1 className="text-2xl font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 sm:text-4xl lg:text-5xl">
-                  {selectedCategory} Gallery
+                  {selectedCategory}
                 </h1>
-                <p className="max-w-2xl text-sm text-gray-600 sm:text-lg">
-                  Discover our curated collection of stunning{" "}
-                  {selectedCategory.toLowerCase()} photography
-                </p>
-                <div className="flex flex-wrap gap-3 items-center text-xs text-gray-500 sm:gap-4 sm:text-sm">
-                  <div className="flex gap-2 items-center">
-                    <Image className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{sortedImages.length} photos</span>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{subcategories.length} subcategories</span>
-                  </div>
-                </div>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -205,42 +192,72 @@ const Subcategories = ({
                 )}
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-                <div className="flex gap-2 items-center">
-                  <label className="text-sm font-medium text-gray-700">
-                    Sort by:
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="weight">Weight</option>
-                  </select>
-                </div>
-                <div className="flex gap-2 items-center">
-                  <label className="text-sm font-medium text-gray-700">
-                    Min Weight (g):
-                  </label>
-                  <input
-                    type="number"
-                    value={minWeight}
-                    onChange={(e) => setMinWeight(e.target.value)}
-                    placeholder="0"
-                    className="px-2 py-1 text-sm rounded border border-gray-300"
-                  />
-                </div>
-                <div className="flex gap-2 items-center">
-                  <label className="text-sm font-medium text-gray-700">
-                    Max Weight (g):
-                  </label>
-                  <input
-                    type="number"
-                    value={maxWeight}
-                    onChange={(e) => setMaxWeight(e.target.value)}
-                    placeholder="100"
-                    className="px-2 py-1 text-sm rounded border border-gray-300"
-                  />
+              {/* Filter & Sort Section */}
+              <div className="mb-6 sm:mb-8">
+                <div className="p-4 rounded-xl border shadow-lg backdrop-blur-md bg-white/70 sm:rounded-2xl sm:p-6 border-white/30">
+                  <h3 className="flex gap-2 items-center mb-4 text-lg font-semibold text-gray-800 sm:text-xl">
+                    <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                    Filter & Sort Photos
+                  </h3>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                    <div className="flex gap-2 items-center">
+                      <label className="text-sm font-medium text-gray-700">
+                        Sort by:
+                      </label>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="weight">Weight (Low to High)</option>
+                        <option value="weight-desc">
+                          Weight (High to Low)
+                        </option>
+                        <option value="name">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <label className="text-sm font-medium text-gray-700">
+                        Min Weight (g):
+                      </label>
+                      <input
+                        type="number"
+                        value={minWeight}
+                        onChange={(e) => setMinWeight(e.target.value)}
+                        placeholder="0"
+                        className="px-2 py-1 w-16 text-sm rounded border border-gray-300"
+                        min="0"
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <label className="text-sm font-medium text-gray-700">
+                        Max Weight (g):
+                      </label>
+                      <input
+                        type="number"
+                        value={maxWeight}
+                        onChange={(e) => setMaxWeight(e.target.value)}
+                        placeholder="100"
+                        className="px-2 py-1 w-16 text-sm rounded border border-gray-300"
+                        min="0"
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <button
+                        onClick={() => {
+                          setMinWeight("");
+                          setMaxWeight("");
+                          setSortBy("weight");
+                        }}
+                        className="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg transition-colors hover:bg-gray-200"
+                        title="Reset all filters"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -267,9 +284,6 @@ const Subcategories = ({
                     }`}
                   >
                     <span className="block sm:inline">{sub}</span>
-                    <span className="ml-1 text-xs opacity-75 sm:ml-2">
-                      {(categoryImages[selectedCategory][sub] || []).length}
-                    </span>
                   </button>
                 ))}
               </div>
@@ -278,7 +292,7 @@ const Subcategories = ({
         )}
 
         {/* Photo Grid */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6 xl:gap-8">
           {sortedImages.map((img, idx) => (
             <div
               key={idx}
@@ -300,9 +314,7 @@ const Subcategories = ({
                     <h3 className="text-sm font-semibold truncate sm:text-lg">
                       {selectedSubcategory}
                     </h3>
-                    <p className="text-xs opacity-90 sm:text-sm line-clamp-2">
-                      {getImageDescription(img)}
-                    </p>
+                    {/* Description removed */}
                   </div>
                   {addToCart && (
                     <button
@@ -311,18 +323,20 @@ const Subcategories = ({
                         const item = {
                           id: `${selectedCategory}-${selectedSubcategory}-${idx}`,
                           name: selectedSubcategory,
-                          description: getImageDescription(img),
+                          description: `${selectedCategory} - ${selectedSubcategory} Photo ${
+                            idx + 1
+                          }`,
                           image: getImageUrl(img),
                           category: selectedCategory,
-                          price: 0,
+                          price: 10000, // Default price for gallery items
                           quantity: 1,
                           weight: img.weight || "",
                         };
                         addToCart(item, 1);
                       }}
-                      className="p-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg hover:shadow-xl border border-white/20"
+                      className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 transform sm:p-3 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 sm:opacity-0 sm:group-hover:opacity-100"
                     >
-                      <ShoppingCart className="w-6 h-6" />
+                      <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   )}
                 </div>
@@ -398,9 +412,7 @@ const Subcategories = ({
                   <p className="text-xs opacity-75 sm:text-sm">
                     Photo {lightboxIndex + 1} of {sortedImages.length}
                   </p>
-                  <p className="mt-1 max-w-xs text-xs truncate opacity-75 sm:text-sm sm:max-w-md">
-                    {getImageDescription(sortedImages[lightboxIndex])}
-                  </p>
+                  {/* Description removed from lightbox */}
                 </div>
                 <button
                   onClick={closeLightbox}
@@ -559,19 +571,6 @@ const Subcategories = ({
                       </p>
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-gray-700 sm:mb-3">
-                    Description
-                  </label>
-                  <textarea
-                    value={newPhotoDescription}
-                    onChange={(e) => setNewPhotoDescription(e.target.value)}
-                    placeholder="Describe your photo..."
-                    rows="3"
-                    className="px-3 py-2 w-full text-sm rounded-lg border border-gray-300 transition-all resize-none sm:px-4 sm:py-3 sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-base"
-                  />
                 </div>
 
                 <div>

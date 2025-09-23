@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useJewellery } from "../context/JewelleryContext";
+import { fetchSheetData, addCategory } from "../services/googleSheetsService";
 import {
   Plus,
   X,
@@ -29,6 +30,7 @@ import {
   Watch,
   Shirt,
   Menu,
+  ArrowUp,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import Subcategories from "../components/Subcategories";
@@ -48,6 +50,9 @@ const AdminDashboard = () => {
   } = useJewellery();
 
   const [activeTab, setActiveTab] = useState("categories");
+  const [sheetData, setSheetData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -56,11 +61,16 @@ const AdminDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [viewMode, setViewMode] = useState("grid");
   // Initialize sidebar state based on current viewport to prevent desktop layout jump
-  const initialIsDesktop = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(min-width: 1024px)").matches;
-  const [sidebarOpen, setSidebarOpen] = useState(initialIsDesktop);
-  const [isMobile, setIsMobile] = useState(!initialIsDesktop);
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(min-width: 1024px)").matches
+  );
+  const [sidebarOpen, setSidebarOpen] = useState(isDesktop);
+  const [isMobile, setIsMobile] = useState(!isDesktop);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // Handle navigation from category page
   useEffect(() => {
@@ -127,14 +137,11 @@ const AdminDashboard = () => {
     name: "",
     description: "",
     image: "",
-    subcategory: "",
   });
   const [categoryImagePreview, setCategoryImagePreview] = useState("");
 
   // Categories from context to keep Admin and Catalogue in sync
-  const uniqueCategories = useMemo(() => {
-    return getCategories();
-  }, [jewellery]);
+  const [uniqueCategories, setUniqueCategories] = useState(getCategories());
 
   // Category stats for unique categories
   const categoryStats = useMemo(() => {
@@ -179,17 +186,47 @@ const AdminDashboard = () => {
     }
   }, [newJewellery.image]);
 
-  // Responsive sidebar behavior: open on desktop, closed on mobile
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const handleChange = () => {
-      setSidebarOpen(mq.matches);
-      setIsMobile(!mq.matches);
+    const handleResize = () => {
+      const isDesktop = window.innerWidth >= 1024;
+      setIsDesktop(isDesktop);
+      setSidebarOpen(isDesktop);
     };
-    handleChange();
-    mq.addEventListener("change", handleChange);
-    return () => mq.removeEventListener("change", handleChange);
+
+    const loadSheetData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await fetchSheetData();
+        setSheetData(data);
+      } catch (err) {
+        console.error("Failed to load sheet data:", err);
+        setError("Failed to load data from Google Sheets");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    loadSheetData();
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Back to top functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleAddJewellery = (e) => {
     e.preventDefault();
@@ -278,35 +315,62 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleAddCategory = (e) => {
+  const handleAddCategory = async (e) => {
     e.preventDefault();
-    if (newCategory.name && newCategory.image) {
-      // Check if category already exists (case-insensitive)
-      const categoryExists = uniqueCategories.some(cat =>
-        cat.toLowerCase() === newCategory.name.toLowerCase()
-      );
+    if (!newCategory.name || !newCategory.image) {
+      alert("Please fill in all required fields");
+      return;
+    }
 
-      if (categoryExists) {
-        alert("Category already exists! Please choose a different name.");
-        return;
-      }
+    // Check if category already exists (case-insensitive)
+    const categoryExists = uniqueCategories.some(
+      (cat) => cat.toLowerCase() === newCategory.name.toLowerCase()
+    );
 
-      // Categories list is derived from jewellery; add a product in this category to make it visible
-      const subcategory = newCategory.subcategory || "Default";
+    if (categoryExists) {
+      alert("Category already exists! Please choose a different name.");
+      return;
+    }
+
+    try {
+      // Show loading state
+      setIsLoading(true);
+      setError(null);
+
+      // Add category to Google Sheet
+      await addCategory({
+        name: newCategory.name,
+        description: newCategory.description || '',
+        image: newCategory.image
+      });
+
+      // Update local state if API call is successful
+      setUniqueCategories((prev) => [...prev, newCategory.name]);
       setCategoryImages({
         ...categoryImages,
         [newCategory.name]: {
-          ...categoryImages[newCategory.name],
-          [subcategory]: [newCategory.image],
+          Default: [newCategory.image],
         },
       });
-      alert("Category saved! It will appear once a product is added to this category.");
+
+      alert(`"${newCategory.name}" category added successfully!`);
       resetCategoryForm();
+      
+      // Refresh the sheet data to get the latest changes
+      const updatedData = await fetchSheetData();
+      setSheetData(updatedData);
+      
+    } catch (error) {
+      console.error('Error adding category:', error);
+      setError(`Failed to add category: ${error.message}`);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const resetCategoryForm = () => {
-    setNewCategory({ name: "", description: "", image: "", subcategory: "" });
+    setNewCategory({ name: "", description: "", image: "" });
     setCategoryImagePreview("");
     setShowAddCategoryModal(false);
     const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -314,7 +378,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-20 overflow-x-hidden">
+    <div className="flex overflow-x-hidden flex-col pb-20 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex flex-1">
         {/* Mobile Menu Button */}
         {!sidebarOpen && (
@@ -336,7 +400,7 @@ const AdminDashboard = () => {
 
         {/* Sidebar */}
         {sidebarOpen && (
-          <div className="flex fixed inset-y-0 left-0 z-50 flex-col w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 pb-32 overflow-y-auto overflow-x-hidden scrollbar-hide">
+          <div className="flex overflow-y-auto overflow-x-hidden fixed inset-y-0 left-0 z-50 flex-col pb-32 w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
@@ -384,7 +448,11 @@ const AdminDashboard = () => {
                     title={!sidebarOpen ? tab.label : ""}
                   >
                     <tab.icon className="flex-shrink-0 w-5 h-5" />
-                    {sidebarOpen && <span className="truncate whitespace-nowrap">{tab.label}</span>}
+                    {sidebarOpen && (
+                      <span className="truncate whitespace-nowrap">
+                        {tab.label}
+                      </span>
+                    )}
                   </button>
                 </div>
               ))}
@@ -406,7 +474,7 @@ const AdminDashboard = () => {
 
         {/* Main Content */}
         <div
-          className="flex overflow-hidden flex-col flex-1 min-w-0 lg:ml-72 overflow-x-hidden"
+          className="flex overflow-hidden overflow-x-hidden flex-col flex-1 min-w-0 lg:ml-72"
           style={{ scrollBehavior: "auto" }}
         >
           {/* Top Bar */}
@@ -538,7 +606,7 @@ const AdminDashboard = () => {
           </header>
 
           {/* Content Area */}
-          <main className="flex-1 p-4 sm:p-6 pb-28 lg:pb-6">
+          <main className="flex-1 p-4 pb-28 sm:p-6 lg:pb-6">
             {/* Categories Tab */}
             {activeTab === "categories" && (
               <div className="space-y-6">
@@ -555,38 +623,33 @@ const AdminDashboard = () => {
                 </div>
 
                 {!selectedCategory || selectedCategory === "All" ? (
-                  <div
-                    className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4"
-                  >
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {uniqueCategories.slice(1).map((category) => (
                       <div
                         key={category}
                         onClick={() => {
                           navigate(`/category/${category}`);
                         }}
-                        className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-md group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+                        className="overflow-hidden relative rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
                       >
                         <div className="relative">
                           <img
                             src={
-                              (
-                                (categoryImages[category] || {})[
-                                  Object.keys(categoryImages[category] || {})[0]
-                                ] || []
-                              )[0] || "/download.jpg"
+                              ((categoryImages[category] || {})[
+                                Object.keys(categoryImages[category] || {})[0]
+                              ] || [])[0] || "/download.jpg"
                             }
                             alt={category}
-                            className="object-cover w-full h-44 sm:h-52 md:h-60 transition-transform duration-500 group-hover:scale-105"
+                            className="object-cover w-full h-56 transition-transform duration-500 sm:h-52 md:h-60 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                          <div className="absolute top-3 left-3 text-xs px-2 py-1 rounded-full bg-white/85 text-gray-800">
-                            {Object.keys(categoryImages[category] || {}).length} subcategories
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="text-white text-lg font-bold">
+                          <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10" />
+                          <div className="absolute right-0 bottom-0 left-0 p-4">
+                            <h3 className="text-lg font-bold text-white">
                               {category}
                             </h3>
-                            <p className="text-white/80 text-xs">Tap to view collection</p>
+                            <p className="text-xs text-white/80">
+                              Tap to view collection
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1164,24 +1227,6 @@ const AdminDashboard = () => {
                     className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                {/* Subcategory */}
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Subcategory Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newCategory.subcategory}
-                    onChange={(e) =>
-                      setNewCategory({
-                        ...newCategory,
-                        subcategory: e.target.value,
-                      })
-                    }
-                    placeholder="Subcategory name (optional)"
-                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
               </div>
               {/* Photo Upload */}
               <div>
@@ -1288,6 +1333,17 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed right-6 bottom-24 z-40 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
+          title="Back to Top"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
       )}
 
       <Footer />
