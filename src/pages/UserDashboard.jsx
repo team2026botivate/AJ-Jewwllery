@@ -1015,8 +1015,8 @@ const UserDashboard = () => {
               {/* Category view when a specific category is selected - showing all photos */}
               {selectedCategory !== "All" && (
                 <div className="space-y-6">
-                  {/* Filter and Sort Controls - Sticky */}
-                  <div className="fixed top-0 right-0 left-0 z-50 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-24 md:p-4 md:rounded-xl md:border md:shadow-sm">
+                  {/* Filter and Sort Controls - Fixed for mobile, sticky for desktop */}
+                  <div className="fixed top-0 right-0 left-0 z-50 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-16 md:p-4 md:rounded-xl md:border md:shadow-sm md:bg-white">
                     <div className="flex flex-wrap gap-2 justify-between items-center md:gap-4">
                       <div className="flex flex-wrap gap-2 items-center md:gap-3">
                         <button
@@ -1219,18 +1219,9 @@ const UserDashboard = () => {
                                       : "absolute right-0 bottom-0 left-0 p-4"
                                   }`}
                                 >
-                                  <div>
-                                    <h3
-                                      className={`text-lg font-bold ${
-                                        viewMode === "list"
-                                          ? "text-gray-900"
-                                          : "text-white"
-                                      }`}
-                                    >
-                                      {subcategory}
-                                    </h3>
-                                  </div>
-                                  <button
+                                  <div>{/* Subcategory name removed */}</div>
+                                  <div className="flex justify-end">
+                                    <button
                                     onClick={() => {
                                       const item = {
                                         id: itemId,
@@ -1256,7 +1247,7 @@ const UserDashboard = () => {
                                         ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
                                         : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                                     }`}
-                                  >
+                                    >
                                     <ShoppingCart
                                       className={`${
                                         viewMode === "list" ? "inline mr-2" : ""
@@ -1264,6 +1255,7 @@ const UserDashboard = () => {
                                     />
                                     {viewMode === "list" && "Add to Cart"}
                                   </button>
+                                  </div>
                                 </div>
                                 {selectedCategory !== "All" && imageWeight && (
                                   <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
@@ -1321,9 +1313,7 @@ const UserDashboard = () => {
                           <div className="flex-1 p-4">
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <h4 className="mb-1 text-xl font-bold leading-tight text-gray-900">
-                                  {item.name}
-                                </h4>
+                                {/* Item name removed */}
                                 <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
                                   {item.category}
                                 </p>

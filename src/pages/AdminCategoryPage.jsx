@@ -435,7 +435,7 @@ const AdminCategoryPage = () => {
       {/* Content */}
       <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* Sticky Search Bar */}
-        <div className="sticky top-16 z-30 mb-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="sticky top-16 z-30 p-4 mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="max-w-md">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 w-5 h-5 text-gray-400 transform -translate-y-1/2" />
@@ -471,7 +471,7 @@ const AdminCategoryPage = () => {
                 </div>
 
                 {/* Sticky Filter/Sort Controls */}
-                <div className="sticky top-32 z-50 p-3 rounded-md border border-gray-200 shadow-sm bg-white">
+                <div className="sticky top-32 z-50 p-3 bg-white rounded-md border border-gray-200 shadow-sm">
                   <div className="flex flex-wrap gap-2 justify-between items-center md:gap-4">
                     <div className="flex flex-wrap gap-2 items-center md:gap-3">
                       <button
@@ -500,7 +500,7 @@ const AdminCategoryPage = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex gap-2 items-center">
                       <div className="flex p-1 bg-gray-100 rounded-lg">
                         <button
                           onClick={() => setViewMode("grid")}
@@ -608,15 +608,7 @@ const AdminCategoryPage = () => {
                           }`}
                         >
                           <div>
-                            <h3
-                              className={`text-lg font-bold ${
-                                viewMode === "list"
-                                  ? "text-gray-900"
-                                  : "text-white"
-                              }`}
-                            >
-                              {gi.subcategory}
-                            </h3>
+                            {/* Subcategory name removed */}
                           </div>
                         </div>
 
