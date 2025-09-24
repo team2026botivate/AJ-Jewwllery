@@ -605,9 +605,7 @@ const AdminCategoryPage = () => {
                               : "absolute right-0 bottom-0 left-0 p-4"
                           }`}
                         >
-                          <div>
-                            {/* Subcategory name removed */}
-                          </div>
+                          <div>{/* Subcategory name removed */}</div>
                         </div>
 
                         {gi.weight && viewMode !== "list" && (

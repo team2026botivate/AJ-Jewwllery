@@ -694,11 +694,19 @@ const UserDashboard = () => {
 
   const handleAddToCartClick = (item) => {
     if (clickedItems.has(item.id)) {
-      // Double click - revert color
+      // Double click - remove from cart and turn button yellow
       setClickedItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(item.id);
         return newSet;
+      });
+      
+      // Remove item from cart
+      setCart(cart.filter(cartItem => cartItem.id !== item.id));
+      setToast({
+        message: `Removed ${item.name} from cart!`,
+        type: "info",
+        duration: 3000,
       });
     } else {
       // Single click - add to cart and turn green
@@ -1031,7 +1039,7 @@ const UserDashboard = () => {
                           onClick={() => setShowFilters(!showFilters)}
                           className={`flex items-center px-3 md:px-4 py-2 md:py-3 space-x-2 md:space-x-3 text-sm md:text-base font-semibold rounded-xl border-2 shadow-lg transition-all ${
                             showFilters
-                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-500"
+                              ? "text-white bg-gradient-to-r from-amber-500 to-orange-500 border-amber-500"
                               : "text-gray-700 bg-white border-gray-300 hover:bg-amber-50 hover:border-amber-300"
                           }`}
                         >
@@ -1121,9 +1129,7 @@ const UserDashboard = () => {
                   </div>
 
                   {/* Mobile Spacer - pushes content down when filters are expanded */}
-                  {showFilters && (
-                    <div className="block md:hidden h-40"></div>
-                  )}
+                  {showFilters && <div className="block h-40 md:hidden"></div>}
 
                   {/* Items Grid */}
                   <div
@@ -1229,39 +1235,41 @@ const UserDashboard = () => {
                                   <div>{/* Subcategory name removed */}</div>
                                   <div className="flex justify-end">
                                     <button
-                                    onClick={() => {
-                                      const item = {
-                                        id: itemId,
-                                        category: selectedCategory,
-                                        subcategory: subcategory,
-                                        name: `${selectedCategory} ${subcategory}`,
-                                        description: imageDesc,
-                                        image: imageUrl,
-                                        weight: imageWeight,
-                                      };
-                                      handleAddToCartClick(item);
-                                    }}
-                                    className={`${
-                                      viewMode === "list"
-                                        ? "px-4 py-2 font-medium rounded-lg"
-                                        : "p-2 rounded-full border shadow-lg"
-                                    } opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl ${
-                                      viewMode === "list"
-                                        ? ""
-                                        : "border-white/20"
-                                    } ${
-                                      clickedItems.has(itemId)
-                                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
-                                        : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                                    }`}
-                                    >
-                                    <ShoppingCart
+                                      onClick={() => {
+                                        const item = {
+                                          id: itemId,
+                                          category: selectedCategory,
+                                          subcategory: subcategory,
+                                          name: `${selectedCategory} ${subcategory}`,
+                                          description: imageDesc,
+                                          image: imageUrl,
+                                          weight: imageWeight,
+                                        };
+                                        handleAddToCartClick(item);
+                                      }}
                                       className={`${
-                                        viewMode === "list" ? "inline mr-2" : ""
-                                      } w-5 h-5`}
-                                    />
-                                    {viewMode === "list" && "Add to Cart"}
-                                  </button>
+                                        viewMode === "list"
+                                          ? "px-4 py-2 font-medium rounded-lg"
+                                          : "p-2 rounded-full border shadow-lg"
+                                      } opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl ${
+                                        viewMode === "list"
+                                          ? ""
+                                          : "border-white/20"
+                                      } ${
+                                        clickedItems.has(itemId)
+                                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                                          : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                                      }`}
+                                    >
+                                      <ShoppingCart
+                                        className={`${
+                                          viewMode === "list"
+                                            ? "inline mr-2"
+                                            : ""
+                                        } w-5 h-5`}
+                                      />
+                                      {viewMode === "list" && "Add to Cart"}
+                                    </button>
                                   </div>
                                 </div>
                                 {selectedCategory !== "All" && imageWeight && (
@@ -1527,21 +1535,18 @@ const UserDashboard = () => {
                       <div className="pt-4 mt-4 border-t border-gray-200">
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center space-x-2">
-                            <Clock className="w-4 h-4 text-gray-400" />
+                            <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
                             <span className="text-xs text-gray-500">
-                              Processing Time: 2-3 days
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Truck className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">
-                              Delivery: 5-7 days
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Shield className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">
-                              Insured & Protected
+                              Total Weight: {(() => {
+                                const w = booking.weight;
+                                if (!w) return "N/A";
+                                const ws = String(w).trim();
+                                const weightNum = parseFloat(ws.replace("g", "")) || 0;
+                                const totalWeight = weightNum * booking.quantity;
+                                return `${totalWeight.toFixed(1)}g`;
+                              })()}
                             </span>
                           </div>
                         </div>
@@ -1558,13 +1563,15 @@ const UserDashboard = () => {
                   <p className="mb-6 text-gray-600">
                     Your order history will appear here
                   </p>
-                  <button
-                    onClick={() => setActiveTab("catalog")}
-                    className="flex items-center px-6 py-3 space-x-2 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                  >
-                    <Package className="w-4 h-4" />
-                    <span>Start Shopping</span>
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setActiveTab("catalog")}
+                      className="flex items-center px-6 py-3 space-x-2 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                    >
+                      <Package className="w-4 h-4" />
+                      <span>Start Shopping</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -2083,7 +2090,7 @@ const UserDashboard = () => {
                         Processing
                       </p>
                       <p className="text-sm text-gray-600">
-                        Your order is being prepared (2-3 days)
+                        Your order is being prepared
                       </p>
                     </div>
                   </div>
@@ -2095,7 +2102,7 @@ const UserDashboard = () => {
                     <div>
                       <p className="font-medium text-gray-500">Shipped</p>
                       <p className="text-sm text-gray-600">
-                        Your order will be shipped soon (5-7 days total)
+                        Your order will be shipped soon
                       </p>
                     </div>
                   </div>
