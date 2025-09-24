@@ -146,6 +146,7 @@ const UserDashboard = () => {
   const [orderJustPlaced, setOrderJustPlaced] = useState(false);
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showCartModal, setShowCartModal] = useState(false);
 
   const [newJewellery, setNewJewellery] = useState({
     category: "",
@@ -686,7 +687,7 @@ const UserDashboard = () => {
 
   return (
     <div className="flex overflow-y-auto overflow-x-hidden pb-28 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 scrollbar-hide">
-      <style jsx>{`
+      <style>{`
         @keyframes slideUp {
           from {
             transform: translateY(100%);
@@ -764,7 +765,6 @@ const UserDashboard = () => {
           <nav className="flex-1 p-4 space-y-2">
             {[
               { id: "catalog", label: "Catalogue", icon: Package },
-              { id: "cart", label: "Cart", icon: ShoppingCart },
               { id: "bookings", label: "Orders", icon: History },
             ].map((tab) => (
               <div key={tab.id} className="relative">
@@ -828,7 +828,6 @@ const UserDashboard = () => {
           <nav className="flex-1 space-y-2">
             {[
               { id: "catalog", label: "Catalogue", icon: Package },
-              { id: "cart", label: "Cart", icon: ShoppingCart },
               { id: "bookings", label: "Orders", icon: History },
             ].map((tab) => (
               <div key={tab.id} className="relative">
@@ -886,6 +885,21 @@ const UserDashboard = () => {
               <div className="text-base font-semibold text-gray-800">
                 AT Jeweller
               </div>
+              {/* Cart Button in Header */}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowCartModal(true)}
+                  className="relative flex items-center justify-center w-10 h-10 text-gray-600 transition-colors rounded-lg hover:bg-gray-100 hover:text-gray-900"
+                  title="Shopping Cart"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {cart.length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex justify-center items-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -932,7 +946,9 @@ const UserDashboard = () => {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   // Add a sample item from this category to cart
-                                  const sampleItem = jewellery.find(item => item.category === category);
+                                  const sampleItem = jewellery.find(
+                                    (item) => item.category === category
+                                  );
                                   if (sampleItem) {
                                     addToCart(sampleItem, 1);
                                   }
@@ -1021,12 +1037,24 @@ const UserDashboard = () => {
 
                             <p className="mb-4 text-sm leading-relaxed text-gray-600">
                               {item.description}
-                              {item.weight && ` | Weight: ${item.weight}g`}
+                              {item.weight && (() => {
+                                const w = item.weight;
+                                const ws = String(w).trim();
+                                const weightText = /g$/i.test(ws) ? ws : `${ws}g`;
+                                return ` | Weight: ${weightText}`;
+                              })()}
                             </p>
 
                             <div className="flex items-center space-x-3">
                               <span className="text-sm text-gray-600">
                                 Qty: 1
+                              </span>
+                              <span className="text-sm text-gray-600">
+                                {item.weight && (() => {
+                                  const w = item.weight;
+                                  const ws = String(w).trim();
+                                  return /g$/i.test(ws) ? ws : `${ws}g`;
+                                })()}
                               </span>
                               <button
                                 onClick={() => addToCart(item, 1)}
@@ -1117,153 +1145,6 @@ const UserDashboard = () => {
                     </p>
                   </div>
                 ))}
-            </div>
-          )}
-
-          {/* Cart Tab */}
-          {activeTab === "cart" && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Shopping Cart
-                </h2>
-                <div className="flex gap-3 items-center">
-                  {cart.length > 0 && (
-                    <button
-                      onClick={clearCart}
-                      className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg border border-red-200 transition-colors hover:bg-red-100 hover:text-red-700"
-                      title="Clear all items from cart"
-                    >
-                      <Trash2 className="inline mr-1 w-4 h-4" />
-                      Clear Cart
-                    </button>
-                  )}
-                  {cart.length > 0 && (
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600">
-                        {getCartItemCount()} items in cart
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {cart.length > 0 ? (
-                <div className="space-y-6">
-                  {/* Cart Items */}
-                  <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-200 shadow-sm">
-                    {cart.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center p-6 space-x-4 transition-colors hover:bg-gray-50"
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="object-cover w-20 h-20 rounded-xl"
-                        />
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {item.name}
-                          </h3>
-                          <p className="mb-1 text-sm text-gray-600">
-                            {item.category}
-                          </p>
-                          {item.weight && (
-                            <p className="text-xs text-gray-500">
-                              Weight: {item.weight}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-600">
-                            Qty: {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="p-2 text-red-500 rounded-lg transition-colors hover:bg-red-50"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Order Summary - Removed */}
-                  <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200">
-                    <h3 className="mb-4 text-xl font-semibold text-gray-900">
-                      Order Summary
-                    </h3>
-
-                    <div className="mb-6 space-y-3">
-                      <div className="flex justify-between text-gray-600">
-                        <span>Items ({getCartItemCount()})</span>
-                        <span>Ready for Order</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={confirmOrder}
-                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      <span>Confirm Order</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-16 text-center bg-white rounded-2xl border border-gray-200">
-                  {orderJustPlaced ? (
-                    <>
-                      <CheckCircle className="mx-auto mb-4 w-16 h-16 text-green-500" />
-                      <h3 className="mb-2 text-xl font-medium text-gray-900">
-                        Order Placed Successfully!
-                      </h3>
-                      <p className="mb-6 text-gray-600">
-                        Thank you for your order. Your items will be processed
-                        shortly.
-                      </p>
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => {
-                            setOrderJustPlaced(false);
-                            setActiveTab("bookings");
-                          }}
-                          className="px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                        >
-                          View My Orders
-                        </button>
-                        <button
-                          onClick={() => {
-                            setOrderJustPlaced(false);
-                            setActiveTab("catalog");
-                          }}
-                          className="px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                        >
-                          Continue Shopping
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="mx-auto mb-4 w-16 h-16 text-gray-300" />
-                      <h3 className="mb-2 text-xl font-medium text-gray-900">
-                        Your cart is empty
-                      </h3>
-                      <p className="mb-6 text-gray-600">
-                        Add some beautiful jewellery to your cart
-                      </p>
-                      <button
-                        onClick={() => setActiveTab("catalog")}
-                        className="px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                      >
-                        Browse Catalogue
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
@@ -1585,6 +1466,125 @@ const UserDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Modal */}
+      {showCartModal && (
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
+                Shopping Cart
+              </h3>
+              <button
+                onClick={() => setShowCartModal(false)}
+                className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {cart.length > 0 ? (
+              <div className="space-y-6">
+                {/* Cart Items */}
+                <div className="bg-gray-50 rounded-2xl divide-y divide-gray-200">
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center p-4 space-x-4 transition-colors hover:bg-gray-100"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="object-cover w-16 h-16 rounded-xl"
+                      />
+                      <div className="flex-1">
+                        <h4 className="text-base font-semibold text-gray-900">
+                          {item.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {item.category}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Weight: {(() => {
+                            const w = item.weight;
+                            if (!w) return "N/A";
+                            const ws = String(w).trim();
+                            return /g$/i.test(ws) ? ws : `${ws}g`;
+                          })()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-sm text-gray-600">
+                          Qty: {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-2 text-red-500 rounded-lg transition-colors hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Order Summary */}
+                <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200">
+                  <h4 className="mb-4 text-lg font-semibold text-gray-900">
+                    Order Summary
+                  </h4>
+
+                  <div className="mb-6 space-y-3">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Total Quantity: {getCartItemCount()}</span>
+                      <span>Items ({cart.length})</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={clearCart}
+                      className="flex-1 px-4 py-3 font-medium text-red-600 bg-red-50 rounded-xl border border-red-200 transition-colors hover:bg-red-100 hover:text-red-700"
+                    >
+                      Clear Cart
+                    </button>
+                    <button
+                      onClick={() => {
+                        confirmOrder();
+                        setShowCartModal(false);
+                      }}
+                      className="flex-1 px-4 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                    >
+                      Confirm Order
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-16 text-center">
+                <ShoppingCart className="mx-auto mb-4 w-16 h-16 text-gray-300" />
+                <h4 className="mb-2 text-lg font-medium text-gray-900">
+                  Your cart is empty
+                </h4>
+                <p className="mb-6 text-gray-600">
+                  Add some beautiful jewellery to your cart
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCartModal(false);
+                      setActiveTab("catalog");
+                    }}
+                    className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                  >
+                    Browse Catalogue
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

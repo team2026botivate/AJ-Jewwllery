@@ -347,14 +347,11 @@ const Subcategories = ({
                   );
                 })()}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 from-transparent group-hover:opacity-100"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
               <div className="absolute right-0 bottom-0 left-0 z-10 p-3 text-white transition-transform duration-300 transform translate-y-0 sm:p-4">
                 <div className="flex justify-between items-end">
                   <div>
-                    <h3 className="text-sm font-semibold truncate sm:text-lg">
-                      {selectedSubcategory}
-                    </h3>
-                    {/* Description removed */}
+                    {/* Subcategory name removed */}
                   </div>
                   {addToCart && (
                     <button
@@ -449,19 +446,6 @@ const Subcategories = ({
                   <h3 className="text-base font-semibold sm:text-lg">
                     {selectedCategory} • {selectedSubcategory}
                   </h3>
-                  <p className="text-xs opacity-75 sm:text-sm">
-                    Photo {lightboxIndex + 1} of {sortedImages.length}
-                    {(() => {
-                      const raw = sortedImages[lightboxIndex]?.weight;
-                      const ws = String(raw || "18g").trim();
-                      const text = /g$/i.test(ws) ? ws : `${ws}g`;
-                      return (
-                        <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-white/20 rounded">
-                          {text}
-                        </span>
-                      );
-                    })()}
-                  </p>
                   {/* Description removed from lightbox */}
                 </div>
                 <button
