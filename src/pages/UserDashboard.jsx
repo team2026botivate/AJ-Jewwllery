@@ -1051,8 +1051,6 @@ const UserDashboard = () => {
                             <option value="weight-desc">
                               Weight: High to Low
                             </option>
-                            <option value="name">Name: A-Z</option>
-                            <option value="name-desc">Name: Z-A</option>
                           </select>
                           <div className="flex absolute inset-y-0 right-0 items-center px-1 pointer-events-none md:px-2">
                             <ChevronDown className="w-3 h-3 text-gray-500 md:w-4 md:h-4" />
