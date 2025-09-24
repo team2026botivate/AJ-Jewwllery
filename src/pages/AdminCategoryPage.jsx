@@ -49,50 +49,108 @@ const AdminCategoryPage = () => {
   };
   const [categoryImages, setCategoryImages] = useState({
     Animals: {
-      Lion: [asset('download.jpg'), asset('download (1).jpg')],
-      Tiger: [asset('download (2).jpg')],
-      Elephant: [asset('download (3).jpg')],
+      Lion: [
+        { url: asset('download.jpg'), description: 'Lion pendant', weight: '18g' },
+        { url: asset('download (1).jpg'), description: 'Lion necklace', weight: '22g' }
+      ],
+      Tiger: [
+        { url: asset('download (2).jpg'), description: 'Tiger brooch', weight: '25g' }
+      ],
+      Elephant: [
+        { url: asset('download (3).jpg'), description: 'Elephant charm', weight: '20g' }
+      ],
     },
     "Arabic Style 21k": {
-      Necklace: [asset('download (2).jpg')],
-      Bracelet: [asset('images.jpg')],
-      Ring: [asset('download (3).jpg')],
+      Necklace: [
+        { url: asset('download (2).jpg'), description: 'Arabic necklace', weight: '30g' }
+      ],
+      Bracelet: [
+        { url: asset('images.jpg'), description: 'Arabic bracelet', weight: '28g' }
+      ],
+      Ring: [
+        { url: asset('download (3).jpg'), description: 'Arabic ring', weight: '12g' }
+      ],
     },
     Rings: {
-      Diamond: [asset('download (1).jpg')],
-      Sapphire: [asset('download (2).jpg')],
-      Ruby: [asset('download (3).jpg')],
+      Diamond: [
+        { url: asset('download (1).jpg'), description: 'Diamond ring', weight: '8g' }
+      ],
+      Sapphire: [
+        { url: asset('download (2).jpg'), description: 'Sapphire ring', weight: '10g' }
+      ],
+      Ruby: [
+        { url: asset('download (3).jpg'), description: 'Ruby ring', weight: '9g' }
+      ],
     },
     Earrings: {
-      Pearl: [asset('images.jpg')],
-      Gold: [asset('download.jpg')],
-      Diamond: [asset('download (1).jpg')],
+      Pearl: [
+        { url: asset('images.jpg'), description: 'Pearl earrings', weight: '6g' }
+      ],
+      Gold: [
+        { url: asset('download.jpg'), description: 'Gold earrings', weight: '14g' }
+      ],
+      Diamond: [
+        { url: asset('download (1).jpg'), description: 'Diamond earrings', weight: '7g' }
+      ],
     },
     Bracelets: {
-      Silver: [asset('images.jpg')],
-      Gold: [asset('download (2).jpg')],
-      Beaded: [asset('download.jpg')],
+      Silver: [
+        { url: asset('images.jpg'), description: 'Silver bracelet', weight: '16g' }
+      ],
+      Gold: [
+        { url: asset('download (2).jpg'), description: 'Gold bracelet', weight: '24g' }
+      ],
+      Beaded: [
+        { url: asset('download.jpg'), description: 'Beaded bracelet', weight: '11g' }
+      ],
     },
     Pendant: {
-      Heart: [asset('download (1).jpg')],
-      Cross: [asset('download (2).jpg')],
-      Star: [asset('download (3).jpg')],
+      Heart: [
+        { url: asset('download (1).jpg'), description: 'Heart pendant', weight: '5g' }
+      ],
+      Cross: [
+        { url: asset('download (2).jpg'), description: 'Cross pendant', weight: '8g' }
+      ],
+      Star: [
+        { url: asset('download (3).jpg'), description: 'Star pendant', weight: '6g' }
+      ],
     },
     "Man Collection": {
-      Chain: [asset('images.jpg')],
-      Bracelet: [asset('download.jpg')],
-      Ring: [asset('download (1).jpg')],
+      Chain: [
+        { url: asset('images.jpg'), description: 'Men chain', weight: '35g' }
+      ],
+      Bracelet: [
+        { url: asset('download.jpg'), description: 'Men bracelet', weight: '28g' }
+      ],
+      Ring: [
+        { url: asset('download (1).jpg'), description: 'Men ring', weight: '15g' }
+      ],
     },
     SET: {
-      Gold: [asset('download (3).jpg')],
-      Diamond: [asset('images.jpg')],
-      Silver: [asset('download.jpg')],
+      Gold: [
+        { url: asset('download (3).jpg'), description: 'Gold set', weight: '45g' }
+      ],
+      Diamond: [
+        { url: asset('images.jpg'), description: 'Diamond set', weight: '32g' }
+      ],
+      Silver: [
+        { url: asset('download.jpg'), description: 'Silver set', weight: '38g' }
+      ],
     },
     Mine: {
-      Diamond: [asset('download (1).jpg')],
-      Ruby: [asset('download (2).jpg')],
+      Diamond: [
+        { url: asset('download (1).jpg'), description: 'Mined diamond', weight: '4g' }
+      ],
+      Ruby: [
+        { url: asset('download (2).jpg'), description: 'Mined ruby', weight: '6g' }
+      ],
     },
   });
+
+  // Provide an addToCart handler for the gallery so the cart button renders
+  const addToCart = (item, quantity = 1) => {
+    alert(`Added ${item.name} to cart (Admin Mode)`);
+  };
 
   // Set selected category based on URL parameter - runs on mount and when categoryName changes
   useEffect(() => {
@@ -193,6 +251,7 @@ const AdminCategoryPage = () => {
                   categoryImages={categoryImages}
                   setCategoryImages={setCategoryImages}
                   setSelectedCategory={setSelectedCategory}
+                  addToCart={addToCart}
                 />
               </div>
             </div>

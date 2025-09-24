@@ -95,6 +95,38 @@ const Subcategories = ({
       setSelectedSubcategory(subcategoryName);
       alert(`Subcategory "${subcategoryName}" added successfully!`);
       resetSubcategoryForm();
+
+      // Demo mode: Add sample data if no images exist
+      useEffect(() => {
+        if (sortedImages.length === 0 && selectedSubcategory && selectedCategory) {
+          console.log("Adding demo images for:", selectedCategory, selectedSubcategory);
+          const demoImages = [
+            {
+              url: asset("/download.jpg"),
+              description: `${selectedCategory} ${selectedSubcategory} Demo Photo 1`,
+              weight: "18g",
+            },
+            {
+              url: asset("/images.jpg"),
+              description: `${selectedCategory} ${selectedSubcategory} Demo Photo 2`,
+              weight: "22g",
+            },
+            {
+              url: asset("/download (1).jpg"),
+              description: `${selectedCategory} ${selectedSubcategory} Demo Photo 3`,
+              weight: "25g",
+            }
+          ];
+
+          setCategoryImages({
+            ...categoryImages,
+            [selectedCategory]: {
+              ...categoryImages[selectedCategory],
+              [selectedSubcategory]: demoImages
+            }
+          });
+        }
+      }, [sortedImages.length, selectedCategory, selectedSubcategory, categoryImages, asset]);
     }
   };
 
@@ -268,9 +300,7 @@ const Subcategories = ({
         {subcategories.length > 0 && (
           <div className="mb-6 sm:mb-8">
             <div className="p-4 rounded-xl border shadow-lg backdrop-blur-md bg-white/70 sm:rounded-2xl sm:p-6 border-white/30">
-              <h3 className="flex gap-2 items-center mb-3 text-lg font-semibold text-gray-800 sm:text-xl sm:mb-4">
-              
-              </h3>
+              <h3 className="flex gap-2 items-center mb-3 text-lg font-semibold text-gray-800 sm:text-xl sm:mb-4"></h3>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {subcategories.map((sub) => (
                   <button
@@ -306,14 +336,19 @@ const Subcategories = ({
                   loading="lazy"
                 />
                 {/* Weight Badge */}
-                {img.weight && (
-                  <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold text-white bg-black/70 rounded-lg backdrop-blur-sm sm:px-3 sm:py-1.5 sm:text-sm">
-                    {img.weight}
-                  </div>
-                )}
+                {(() => {
+                  const raw = typeof img === "object" ? img.weight : "";
+                  const ws = String(raw || "18g").trim();
+                  const text = /g$/i.test(ws) ? ws : `${ws}g`;
+                  return (
+                    <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold text-white bg-black/70 rounded-lg backdrop-blur-sm sm:px-3 sm:py-1.5 sm:text-sm">
+                      {text}
+                    </div>
+                  );
+                })()}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 from-black/70 group-hover:opacity-100"></div>
-              <div className="absolute right-0 bottom-0 left-0 p-3 text-white transition-transform duration-300 transform translate-y-0 md:translate-y-full md:group-hover:translate-y-0 sm:p-4">
+              <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 from-transparent group-hover:opacity-100"></div>
+              <div className="absolute right-0 bottom-0 left-0 z-10 p-3 text-white transition-transform duration-300 transform translate-y-0 sm:p-4">
                 <div className="flex justify-between items-end">
                   <div>
                     <h3 className="text-sm font-semibold truncate sm:text-lg">
@@ -339,7 +374,7 @@ const Subcategories = ({
                         };
                         addToCart(item, 1);
                       }}
-                      className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 transform sm:p-3 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 sm:opacity-0 sm:group-hover:opacity-100"
+                      className="relative z-10 p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 transform sm:p-3 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
                     >
                       <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
@@ -416,11 +451,16 @@ const Subcategories = ({
                   </h3>
                   <p className="text-xs opacity-75 sm:text-sm">
                     Photo {lightboxIndex + 1} of {sortedImages.length}
-                    {sortedImages[lightboxIndex]?.weight && (
-                      <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-white/20 rounded">
-                        {sortedImages[lightboxIndex].weight}
-                      </span>
-                    )}
+                    {(() => {
+                      const raw = sortedImages[lightboxIndex]?.weight;
+                      const ws = String(raw || "18g").trim();
+                      const text = /g$/i.test(ws) ? ws : `${ws}g`;
+                      return (
+                        <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-white/20 rounded">
+                          {text}
+                        </span>
+                      );
+                    })()}
                   </p>
                   {/* Description removed from lightbox */}
                 </div>

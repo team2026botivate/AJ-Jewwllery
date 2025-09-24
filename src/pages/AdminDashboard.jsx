@@ -31,6 +31,7 @@ import {
   Shirt,
   Menu,
   ArrowUp,
+  ShoppingCart,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import Subcategories from "../components/Subcategories";
@@ -117,20 +118,191 @@ const AdminDashboard = () => {
     image: "",
   });
 
-  // Categories now derive from JewelleryContext to stay in sync with the catalogue
+  // Resolve public assets with Vite base (safe join)
+  const asset = (name) => {
+    if (!name) return name;
+    const base = import.meta.env.BASE_URL || "/";
+    const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const clean = name.startsWith("/") ? name.slice(1) : name;
+    return `${cleanBase}/${clean}`;
+  };
 
   const [categoryImages, setCategoryImages] = useState({
-    All: { Default: ["/download.jpg", "/images.jpg"] },
-    Animals: { Default: ["/download (1).jpg", "/images (1).jpg"] },
-    "Arabic Style 21k": { Default: ["/download (2).jpg", "/images (2).jpg"] },
-    Bracelets: { Default: ["/download (3).jpg", "/images (3).jpg"] },
-    Mine: { Default: ["/download (1).jpg", "/images (1).jpg"] },
-    SET: { Default: ["/download (2).jpg", "/images (2).jpg"] },
-    Pendant: { Default: ["/download (3).jpg", "/images (3).jpg"] },
-    "Man Collection": { Default: ["/download (1).jpg", "/images (1).jpg"] },
-    Rings: { Default: ["/download (2).jpg", "/images (2).jpg"] },
-    Earrings: { Default: ["/download (3).jpg", "/images (3).jpg"] },
+    All: { Default: [asset("download.jpg"), asset("images.jpg")] },
+    Animals: {
+      Lion: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Beautiful lion pendant with intricate detailing",
+          weight: "15g",
+        },
+        {
+          url: asset("images (1).jpg"),
+          description: "Elegant lion necklace showcasing craftsmanship",
+          weight: "20g",
+        },
+      ],
+      Tiger: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Stunning tiger brooch with vibrant colors",
+          weight: "18g",
+        },
+      ],
+    },
+    "Arabic Style 21k": {
+      Necklace: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Traditional Arabic necklace in 21k gold",
+          weight: "30g",
+        },
+      ],
+      Bracelet: [
+        {
+          url: asset("images.jpg"),
+          description: "Elegant Arabic bracelet with cultural motifs",
+          weight: "22g",
+        },
+      ],
+    },
+    Rings: {
+      Diamond: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Sparkling diamond ring with premium cut",
+          weight: "8g",
+        },
+      ],
+      Gold: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Beautiful gold ring with classic design",
+          weight: "12g",
+        },
+      ],
+    },
+    Earrings: {
+      Pearl: [
+        {
+          url: asset("images.jpg"),
+          description: "Classic pearl earrings with timeless appeal",
+          weight: "6g",
+        },
+      ],
+      Gold: [
+        {
+          url: asset("download.jpg"),
+          description: "Solid gold earrings with modern design",
+          weight: "14g",
+        },
+      ],
+    },
+    Bracelets: {
+      Silver: [
+        {
+          url: asset("images.jpg"),
+          description: "Sterling silver bracelet with sleek finish",
+          weight: "16g",
+        },
+      ],
+      Gold: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Luxurious gold bracelet for special occasions",
+          weight: "28g",
+        },
+      ],
+    },
+    Pendant: {
+      Heart: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Romantic heart pendant with delicate chain",
+          weight: "7g",
+        },
+      ],
+      Cross: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Elegant cross pendant with spiritual meaning",
+          weight: "13g",
+        },
+      ],
+    },
+    "Man Collection": {
+      Chain: [
+        {
+          url: asset("images.jpg"),
+          description: "Stylish men's chain with rugged design",
+          weight: "35g",
+        },
+      ],
+      Ring: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Men's ring with sophisticated engraving",
+          weight: "17g",
+        },
+      ],
+    },
+    SET: {
+      Gold: [
+        {
+          url: asset("download (3).jpg"),
+          description: "Complete gold jewelry set for elegance",
+          weight: "45g",
+        },
+      ],
+      Diamond: [
+        {
+          url: asset("images.jpg"),
+          description: "Diamond jewelry set with sparkling gems",
+          weight: "32g",
+        },
+      ],
+    },
+    Mine: {
+      Diamond: [
+        {
+          url: asset("download (1).jpg"),
+          description: "Premium mined diamond with exceptional clarity",
+          weight: "4g",
+        },
+      ],
+      Ruby: [
+        {
+          url: asset("download (2).jpg"),
+          description: "Vivid ruby from natural mines",
+          weight: "6g",
+        },
+      ],
+    },
   });
+
+  const getCategoryCover = (category) => {
+    const categoryData = categoryImages[category];
+    if (!categoryData) return asset("download.jpg");
+
+    // Get the first subcategory
+    const firstSubcategory = Object.keys(categoryData)[0];
+    if (!firstSubcategory) return asset("download.jpg");
+
+    // Get the first photo from the first subcategory
+    const photos = categoryData[firstSubcategory];
+    if (!photos || !Array.isArray(photos) || photos.length === 0)
+      return asset("download.jpg");
+
+    // Handle both string URLs and photo objects
+    const firstPhoto = photos[0];
+    if (typeof firstPhoto === "string") {
+      return asset(firstPhoto);
+    } else if (firstPhoto && firstPhoto.url) {
+      return asset(firstPhoto.url);
+    }
+
+    return asset("download.jpg");
+  };
 
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState({
@@ -179,6 +351,11 @@ const AdminDashboard = () => {
   }, [filteredJewellery, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredJewellery.length / itemsPerPage);
+
+  const addToCart = (item, quantity) => {
+    // For admin dashboard, we could add items to a temporary cart for testing purposes
+    alert(`Added ${item.name} to cart (Admin Mode)`);
+  };
 
   useEffect(() => {
     if (newJewellery.image) {
@@ -340,8 +517,8 @@ const AdminDashboard = () => {
       // Add category to Google Sheet
       await addCategory({
         name: newCategory.name,
-        description: newCategory.description || '',
-        image: newCategory.image
+        description: newCategory.description || "",
+        image: newCategory.image,
       });
 
       // Update local state if API call is successful
@@ -355,13 +532,12 @@ const AdminDashboard = () => {
 
       alert(`"${newCategory.name}" category added successfully!`);
       resetCategoryForm();
-      
+
       // Refresh the sheet data to get the latest changes
       const updatedData = await fetchSheetData();
       setSheetData(updatedData);
-      
     } catch (error) {
-      console.error('Error adding category:', error);
+      console.error("Error adding category:", error);
       setError(`Failed to add category: ${error.message}`);
       alert(`Error: ${error.message}`);
     } finally {
@@ -634,22 +810,41 @@ const AdminDashboard = () => {
                       >
                         <div className="relative">
                           <img
-                            src={
-                              ((categoryImages[category] || {})[
-                                Object.keys(categoryImages[category] || {})[0]
-                              ] || [])[0] || "/download.jpg"
-                            }
+                            src={getCategoryCover(category)}
                             alt={category}
                             className="object-cover w-full h-56 transition-transform duration-500 sm:h-52 md:h-60 group-hover:scale-105"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10" />
                           <div className="absolute right-0 bottom-0 left-0 p-4">
-                            <h3 className="text-lg font-bold text-white">
-                              {category}
-                            </h3>
-                            <p className="text-xs text-white/80">
-                              Tap to view collection
-                            </p>
+                            <div className="flex justify-between items-end">
+                              <div>
+                                <h3 className="text-lg font-bold text-white">
+                                  {category}
+                                </h3>
+                                <p className="text-xs text-white/80">
+                                  Tap to view collection
+                                </p>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Add a sample item from this category to cart
+                                  const sampleItem = jewellery.find(
+                                    (item) => item.category === category
+                                  );
+                                  if (sampleItem) {
+                                    addToCart(sampleItem, 1);
+                                  } else {
+                                    alert(
+                                      `No items available in ${category} category`
+                                    );
+                                  }
+                                }}
+                                className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20"
+                              >
+                                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -661,6 +856,7 @@ const AdminDashboard = () => {
                     categoryImages={categoryImages}
                     setCategoryImages={setCategoryImages}
                     setSelectedCategory={setSelectedCategory}
+                    addToCart={addToCart}
                   />
                 )}
               </div>
