@@ -269,8 +269,7 @@ const Subcategories = ({
           <div className="mb-6 sm:mb-8">
             <div className="p-4 rounded-xl border shadow-lg backdrop-blur-md bg-white/70 sm:rounded-2xl sm:p-6 border-white/30">
               <h3 className="flex gap-2 items-center mb-3 text-lg font-semibold text-gray-800 sm:text-xl sm:mb-4">
-                <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-                Browse Collections
+              
               </h3>
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {subcategories.map((sub) => (
@@ -306,6 +305,12 @@ const Subcategories = ({
                   className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
                   loading="lazy"
                 />
+                {/* Weight Badge */}
+                {img.weight && (
+                  <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold text-white bg-black/70 rounded-lg backdrop-blur-sm sm:px-3 sm:py-1.5 sm:text-sm">
+                    {img.weight}
+                  </div>
+                )}
               </div>
               <div className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 from-black/70 group-hover:opacity-100"></div>
               <div className="absolute right-0 bottom-0 left-0 p-3 text-white transition-transform duration-300 transform translate-y-0 md:translate-y-full md:group-hover:translate-y-0 sm:p-4">
@@ -411,6 +416,11 @@ const Subcategories = ({
                   </h3>
                   <p className="text-xs opacity-75 sm:text-sm">
                     Photo {lightboxIndex + 1} of {sortedImages.length}
+                    {sortedImages[lightboxIndex]?.weight && (
+                      <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-white/20 rounded">
+                        {sortedImages[lightboxIndex].weight}
+                      </span>
+                    )}
                   </p>
                   {/* Description removed from lightbox */}
                 </div>
@@ -470,6 +480,35 @@ const Subcategories = ({
                 ))}
               </div>
             </div>
+
+            {/* Add to Cart Button */}
+            {addToCart && (
+              <div className="absolute right-4 bottom-52 sm:bottom-56 sm:right-6">
+                <button
+                  onClick={() => {
+                    const currentImage = sortedImages[lightboxIndex];
+                    const item = {
+                      id: `${selectedCategory}-${selectedSubcategory}-${lightboxIndex}`,
+                      name: selectedSubcategory,
+                      description: `${selectedCategory} - ${selectedSubcategory} Photo ${
+                        lightboxIndex + 1
+                      }`,
+                      image: getImageUrl(currentImage),
+                      category: selectedCategory,
+                      price: 10000, // Default price for gallery items
+                      quantity: 1,
+                      weight: currentImage.weight || "",
+                    };
+                    addToCart(item, 1);
+                    closeLightbox();
+                  }}
+                  className="flex gap-2 items-center px-4 py-2 font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all duration-300 hover:from-amber-600 hover:to-orange-600 hover:scale-105 active:scale-95 hover:shadow-xl"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="hidden sm:inline">Add to Cart</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
