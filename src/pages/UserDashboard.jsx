@@ -1016,7 +1016,7 @@ const UserDashboard = () => {
               {selectedCategory !== "All" && (
                 <div className="space-y-6">
                   {/* Filter and Sort Controls - Fixed for mobile, sticky for desktop */}
-                  <div className="fixed top-0 right-0 left-0 z-50 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-16 md:p-4 md:rounded-xl md:border md:shadow-sm md:bg-white">
+                  <div className="fixed top-0 right-0 left-0 z-50 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-4 md:p-6 md:rounded-2xl md:border-2 md:shadow-xl md:bg-white md:border-amber-200 md:mb-8">
                     <div className="flex flex-wrap gap-2 justify-between items-center md:gap-4">
                       <div className="flex flex-wrap gap-2 items-center md:gap-3">
                         <button
@@ -1029,7 +1029,11 @@ const UserDashboard = () => {
                         </button>
                         <button
                           onClick={() => setShowFilters(!showFilters)}
-                          className="flex items-center px-2 md:px-3 py-1.5 md:py-2 space-x-1 md:space-x-2 text-xs md:text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
+                          className={`flex items-center px-3 md:px-4 py-2 md:py-3 space-x-2 md:space-x-3 text-sm md:text-base font-semibold rounded-xl border-2 shadow-lg transition-all ${
+                            showFilters
+                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-500"
+                              : "text-gray-700 bg-white border-gray-300 hover:bg-amber-50 hover:border-amber-300"
+                          }`}
                         >
                           <Filter className="w-3 h-3 md:w-4 md:h-4" />
                           <span className="hidden sm:inline">Filters</span>
@@ -1084,7 +1088,7 @@ const UserDashboard = () => {
 
                     {/* Expanded Filters */}
                     {showFilters && (
-                      <div className="p-3 mt-3 bg-gray-50 rounded-xl border border-gray-200 md:mt-4 md:p-4 animate-fade-in">
+                      <div className="p-4 mt-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 md:mt-6 md:p-6 animate-fade-in">
                         <h3 className="mb-2 text-xs font-semibold text-gray-700 md:mb-3 md:text-sm">
                           Filter by Weight (grams)
                         </h3>
@@ -1117,6 +1121,11 @@ const UserDashboard = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Mobile Spacer - pushes content down when filters are expanded */}
+                  {showFilters && (
+                    <div className="block md:hidden h-40"></div>
+                  )}
 
                   {/* Items Grid */}
                   <div
