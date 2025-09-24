@@ -18,6 +18,7 @@ const Subcategories = ({
   setSelectedCategory,
   showActions = true,
   addToCart,
+  clickedItems,
 }) => {
   const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
@@ -98,8 +99,16 @@ const Subcategories = ({
 
       // Demo mode: Add sample data if no images exist
       useEffect(() => {
-        if (sortedImages.length === 0 && selectedSubcategory && selectedCategory) {
-          console.log("Adding demo images for:", selectedCategory, selectedSubcategory);
+        if (
+          sortedImages.length === 0 &&
+          selectedSubcategory &&
+          selectedCategory
+        ) {
+          console.log(
+            "Adding demo images for:",
+            selectedCategory,
+            selectedSubcategory
+          );
           const demoImages = [
             {
               url: asset("/download.jpg"),
@@ -115,18 +124,24 @@ const Subcategories = ({
               url: asset("/download (1).jpg"),
               description: `${selectedCategory} ${selectedSubcategory} Demo Photo 3`,
               weight: "25g",
-            }
+            },
           ];
 
           setCategoryImages({
             ...categoryImages,
             [selectedCategory]: {
               ...categoryImages[selectedCategory],
-              [selectedSubcategory]: demoImages
-            }
+              [selectedSubcategory]: demoImages,
+            },
           });
         }
-      }, [sortedImages.length, selectedCategory, selectedSubcategory, categoryImages, asset]);
+      }, [
+        sortedImages.length,
+        selectedCategory,
+        selectedSubcategory,
+        categoryImages,
+        asset,
+      ]);
     }
   };
 
@@ -339,9 +354,10 @@ const Subcategories = ({
                 {(() => {
                   const raw = typeof img === "object" ? img.weight : "";
                   const ws = String(raw || "18g").trim();
-                  const text = /g$/i.test(ws) ? ws : `${ws}g`;
+                  const weightNum = parseFloat(ws.replace('g', '')) || 0;
+                  const text = `${weightNum.toFixed(2)}g`;
                   return (
-                    <div className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold text-white bg-black/70 rounded-lg backdrop-blur-sm sm:px-3 sm:py-1.5 sm:text-sm">
+                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 px-3 py-1.5 text-sm font-bold text-white bg-black/80 rounded-full backdrop-blur-sm shadow-lg">
                       {text}
                     </div>
                   );
@@ -350,9 +366,7 @@ const Subcategories = ({
               <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
               <div className="absolute right-0 bottom-0 left-0 z-10 p-3 text-white transition-transform duration-300 transform translate-y-0 sm:p-4">
                 <div className="flex justify-between items-end">
-                  <div>
-                    {/* Subcategory name removed */}
-                  </div>
+                  <div>{/* Subcategory name removed */}</div>
                   {addToCart && (
                     <button
                       onClick={(e) => {
@@ -371,7 +385,11 @@ const Subcategories = ({
                         };
                         addToCart(item, 1);
                       }}
-                      className="relative z-10 p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 transform sm:p-3 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 focus:outline-none focus:ring-2 focus:ring-white/70"
+                      className={`relative z-10 p-2 rounded-full border shadow-lg opacity-100 transition-all duration-300 transform sm:p-3 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 focus:outline-none focus:ring-2 focus:ring-white/70 ${
+                        clickedItems?.has(`${selectedCategory}-${selectedSubcategory}-${idx}`)
+                          ? 'bg-gradient-to-r from-green-500 to-green-600'
+                          : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                      }`}
                     >
                       <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
@@ -526,7 +544,11 @@ const Subcategories = ({
                     addToCart(item, 1);
                     closeLightbox();
                   }}
-                  className="flex gap-2 items-center px-4 py-2 font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all duration-300 hover:from-amber-600 hover:to-orange-600 hover:scale-105 active:scale-95 hover:shadow-xl"
+                  className={`flex gap-2 items-center px-4 py-2 font-semibold text-white rounded-xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-xl ${
+                    clickedItems?.has(`${selectedCategory}-${selectedSubcategory}-${lightboxIndex}`)
+                      ? 'bg-gradient-to-r from-green-500 to-green-600'
+                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                  }`}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   <span className="hidden sm:inline">Add to Cart</span>

@@ -46,6 +46,8 @@ import Subcategories from "../components/Subcategories";
 
 const UserDashboard = () => {
   const { user, logout } = useAuth();
+  const [minWeight, setMinWeight] = useState("");
+  const [maxWeight, setMaxWeight] = useState("");
   const {
     jewellery,
     addJewellery,
@@ -143,6 +145,7 @@ const UserDashboard = () => {
   const [imagePreview, setImagePreview] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
+  const [clickedItems, setClickedItems] = useState(new Set());
   const [orderJustPlaced, setOrderJustPlaced] = useState(false);
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -513,7 +516,13 @@ const UserDashboard = () => {
   const addToCart = (item, quantity) => {
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
     if (existingItem) {
-      updateCartQuantity(item.id, existingItem.quantity + quantity);
+      setCart(
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + quantity }
+            : cartItem
+        )
+      );
       setToast({
         message: `Updated ${item.name} quantity in cart!`,
         type: "success",
@@ -529,8 +538,13 @@ const UserDashboard = () => {
     }
   };
 
-  const removeFromCart = (itemId) => {
-    setCart(cart.filter((item) => item.id !== itemId));
+  const clearCart = () => {
+    setCart([]);
+    setToast({
+      message: "Cart cleared successfully!",
+      type: "success",
+      duration: 3000,
+    });
   };
 
   const toggleWishlist = (itemId) => {
@@ -540,6 +554,15 @@ const UserDashboard = () => {
         : [...prev, itemId]
     );
   };
+
+  const getCartTotalWeight = () =>
+    cart
+      .reduce((total, item) => {
+        if (!item.weight) return total;
+        const weightNum = parseFloat(String(item.weight).replace("g", "")) || 0;
+        return total + weightNum * item.quantity;
+      }, 0)
+      .toFixed(1);
 
   const getCartTotal = () =>
     cart.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -669,13 +692,19 @@ const UserDashboard = () => {
     window.location.href = "/";
   };
 
-  const clearCart = () => {
-    setCart([]);
-    setToast({
-      message: "Cart cleared successfully!",
-      type: "success",
-      duration: 3000,
-    });
+  const handleAddToCartClick = (item) => {
+    if (clickedItems.has(item.id)) {
+      // Double click - revert color
+      setClickedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    } else {
+      // Single click - add to cart and turn green
+      addToCart(item, 1);
+      setClickedItems((prev) => new Set(prev).add(item.id));
+    }
   };
 
   const handleBackToCategories = () => {
@@ -889,12 +918,12 @@ const UserDashboard = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowCartModal(true)}
-                  className="relative flex items-center justify-center w-10 h-10 text-gray-600 transition-colors rounded-lg hover:bg-gray-100 hover:text-gray-900"
+                  className="flex relative justify-center items-center w-10 h-10 text-gray-600 rounded-lg transition-colors hover:bg-gray-100 hover:text-gray-900"
                   title="Shopping Cart"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1 -right-1 flex justify-center items-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                    <span className="flex absolute -top-1 -right-1 justify-center items-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
                       {cart.length}
                     </span>
                   )}
@@ -945,15 +974,22 @@ const UserDashboard = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // Add a sample item from this category to cart
                                   const sampleItem = jewellery.find(
                                     (item) => item.category === category
                                   );
                                   if (sampleItem) {
-                                    addToCart(sampleItem, 1);
+                                    handleAddToCartClick(sampleItem);
                                   }
                                 }}
-                                className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20"
+                                className={`p-2 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 ${
+                                  clickedItems.has(
+                                    jewellery.find(
+                                      (item) => item.category === category
+                                    )?.id || ""
+                                  )
+                                    ? "bg-gradient-to-r from-green-500 to-green-600"
+                                    : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                                }`}
                               >
                                 <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                               </button>
@@ -976,20 +1012,271 @@ const UserDashboard = () => {
                 </div>
               )}
 
-              {/* Category view (admin-like) when a specific category is selected */}
+              {/* Category view when a specific category is selected - showing all photos */}
               {selectedCategory !== "All" && (
                 <div className="space-y-6">
-                  <Subcategories
-                    selectedCategory={selectedCategory}
-                    categoryImages={categoryImages}
-                    setCategoryImages={setCategoryImages}
-                    setSelectedCategory={setSelectedCategory}
-                    showActions={false}
-                    addToCart={addToCart}
-                  />
+                  {/* Filter and Sort Controls - Sticky */}
+                  <div className="sticky top-16 md:top-24 z-50 p-3 md:p-4 bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex flex-wrap gap-2 md:gap-4 justify-between items-center">
+                      <div className="flex flex-wrap gap-2 md:gap-3 items-center">
+                        <button
+                          onClick={() => setShowFilters(!showFilters)}
+                          className="flex items-center px-2 md:px-3 py-1.5 md:py-2 space-x-1 md:space-x-2 text-xs md:text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
+                        >
+                          <Filter className="w-3 h-3 md:w-4 md:h-4" />
+                          <span className="hidden sm:inline">Filters</span>
+                          <span className="sm:hidden">Filter</span>
+                        </button>
+
+                        {/* Sort Dropdown */}
+                        <div className="relative">
+                          <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="block px-2 md:px-3 py-1.5 md:py-2 pr-6 md:pr-8 w-full text-xs md:text-sm text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          >
+                            <option value="weight">Weight: Low to High</option>
+                            <option value="weight-desc">
+                              Weight: High to Low
+                            </option>
+                            <option value="name">Name: A-Z</option>
+                            <option value="name-desc">Name: Z-A</option>
+                          </select>
+                          <div className="flex absolute inset-y-0 right-0 items-center px-1 md:px-2 pointer-events-none">
+                            <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-1 md:space-x-3">
+                        <button
+                          onClick={() => setViewMode("grid")}
+                          className={`p-1.5 md:p-2 rounded-lg transition-colors ${
+                            viewMode === "grid"
+                              ? "bg-amber-100 text-amber-600"
+                              : "text-gray-500 hover:bg-gray-100"
+                          }`}
+                          title="Grid View"
+                        >
+                          <Grid3X3 className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                        <button
+                          onClick={() => setViewMode("list")}
+                          className={`p-1.5 md:p-2 rounded-lg transition-colors ${
+                            viewMode === "list"
+                              ? "bg-amber-100 text-amber-600"
+                              : "text-gray-500 hover:bg-gray-100"
+                          }`}
+                          title="List View"
+                        >
+                          <List className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expanded Filters */}
+                    {showFilters && (
+                      <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-200 animate-fade-in">
+                        <h3 className="mb-2 md:mb-3 text-xs md:text-sm font-semibold text-gray-700">
+                          Filter by Weight (grams)
+                        </h3>
+                        <div className="flex gap-2 md:gap-4 items-center">
+                          <div className="flex-1">
+                            <label className="block mb-1 text-xs text-gray-600">
+                              Min Weight
+                            </label>
+                            <input
+                              type="number"
+                              value={minWeight}
+                              onChange={(e) => setMinWeight(e.target.value)}
+                              placeholder="Min"
+                              className="block px-2 md:px-3 py-1.5 md:py-2 w-full text-xs md:text-sm text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block mb-1 text-xs text-gray-600">
+                              Max Weight
+                            </label>
+                            <input
+                              type="number"
+                              value={maxWeight}
+                              onChange={(e) => setMaxWeight(e.target.value)}
+                              placeholder="Max"
+                              className="block px-2 md:px-3 py-1.5 md:py-2 w-full text-xs md:text-sm text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Items Grid */}
+                  <div
+                    className={`grid gap-4 sm:gap-6 transition-all duration-300 ${
+                      viewMode === "grid"
+                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        : "grid-cols-1"
+                    }`}
+                  >
+                    {Object.entries(
+                      categoryImages[selectedCategory] || {}
+                    ).flatMap(([subcategory, images]) =>
+                      images
+                        .filter((image) => {
+                          const weightStr =
+                            typeof image === "string" ? "" : image.weight || "";
+                          const weightNum =
+                            parseFloat(weightStr.replace("g", "")) || 0;
+                          const min = minWeight ? parseFloat(minWeight) : 0;
+                          const max = maxWeight
+                            ? parseFloat(maxWeight)
+                            : Infinity;
+                          return weightNum >= min && weightNum <= max;
+                        })
+                        .sort((a, b) => {
+                          const aWeight =
+                            typeof a === "string" ? "" : a.weight || "";
+                          const bWeight =
+                            typeof b === "string" ? "" : b.weight || "";
+                          const aNum =
+                            parseFloat(aWeight.replace("g", "")) || 0;
+                          const bNum =
+                            parseFloat(bWeight.replace("g", "")) || 0;
+
+                          const aName =
+                            typeof a === "string"
+                              ? a
+                              : `${selectedCategory} ${subcategory}`;
+                          const bName =
+                            typeof b === "string"
+                              ? b
+                              : `${selectedCategory} ${subcategory}`;
+
+                          switch (sortBy) {
+                            case "weight-desc":
+                              return bNum - aNum;
+                            case "name":
+                              return aName.localeCompare(bName);
+                            case "name-desc":
+                              return bName.localeCompare(aName);
+                            case "weight":
+                            default:
+                              return aNum - bNum;
+                          }
+                        })
+                        .map((image, index) => {
+                          const imageUrl =
+                            typeof image === "string" ? image : image.url;
+                          const imageDesc =
+                            typeof image === "string"
+                              ? `${selectedCategory} ${subcategory}`
+                              : image.description ||
+                                `${selectedCategory} ${subcategory}`;
+                          const imageWeight =
+                            typeof image === "string" ? "" : image.weight || "";
+                          const itemId = `${selectedCategory}-${subcategory}-${index}`;
+
+                          return (
+                            <div
+                              key={itemId}
+                              className={`overflow-hidden relative rounded-xl border border-gray-200 shadow-md transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 ${
+                                viewMode === "list" ? "flex" : ""
+                              }`}
+                            >
+                              <div
+                                className={`${
+                                  viewMode === "list"
+                                    ? "w-32 h-32"
+                                    : "aspect-square"
+                                } overflow-hidden relative`}
+                              >
+                                <img
+                                  src={imageUrl}
+                                  alt={imageDesc}
+                                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                                />
+                              </div>
+
+                              <div
+                                className={`${
+                                  viewMode === "list"
+                                    ? "flex-1 p-4"
+                                    : "absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10"
+                                }`}
+                              >
+                                <div
+                                  className={`${
+                                    viewMode === "list"
+                                      ? "flex justify-between items-start"
+                                      : "absolute right-0 bottom-0 left-0 p-4"
+                                  }`}
+                                >
+                                  <div>
+                                    <h3
+                                      className={`text-lg font-bold ${
+                                        viewMode === "list"
+                                          ? "text-gray-900"
+                                          : "text-white"
+                                      }`}
+                                    >
+                                      {subcategory}
+                                    </h3>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const item = {
+                                        id: itemId,
+                                        category: selectedCategory,
+                                        subcategory: subcategory,
+                                        name: `${selectedCategory} ${subcategory}`,
+                                        description: imageDesc,
+                                        image: imageUrl,
+                                        weight: imageWeight,
+                                      };
+                                      handleAddToCartClick(item);
+                                    }}
+                                    className={`${
+                                      viewMode === "list"
+                                        ? "px-4 py-2 font-medium rounded-lg"
+                                        : "p-2 rounded-full border shadow-lg"
+                                    } opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl ${
+                                      viewMode === "list"
+                                        ? ""
+                                        : "border-white/20"
+                                    } ${
+                                      clickedItems.has(itemId)
+                                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                                        : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                                    }`}
+                                  >
+                                    <ShoppingCart
+                                      className={`${
+                                        viewMode === "list" ? "inline mr-2" : ""
+                                      } w-5 h-5`}
+                                    />
+                                    {viewMode === "list" && "Add to Cart"}
+                                  </button>
+                                </div>
+                                {selectedCategory !== "All" && imageWeight && (
+                                  <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
+                                    <div className="px-2 py-1 rounded-full backdrop-blur-sm bg-black/60 sm:bg-black/50 sm:px-3 sm:py-1">
+                                      <span className="text-xs font-semibold text-white sm:text-sm">
+                                        {parseFloat(
+                                          String(imageWeight).replace("g", "")
+                                        ).toFixed(2)}{" "}
+                                        g
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
                 </div>
               )}
-
               {/* Items Grid/List only for search results across all */}
               {selectedCategory === "All" &&
                 !!searchTerm &&
@@ -1005,7 +1292,7 @@ const UserDashboard = () => {
                       {paginatedItems.map((item) => (
                         <div
                           key={item.id}
-                          className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift ${
+                          className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift relative ${
                             viewMode === "list" ? "flex" : ""
                           }`}
                         >
@@ -1037,33 +1324,38 @@ const UserDashboard = () => {
 
                             <p className="mb-4 text-sm leading-relaxed text-gray-600">
                               {item.description}
-                              {item.weight && (() => {
-                                const w = item.weight;
-                                const ws = String(w).trim();
-                                const weightText = /g$/i.test(ws) ? ws : `${ws}g`;
-                                return ` | Weight: ${weightText}`;
-                              })()}
                             </p>
 
                             <div className="flex items-center space-x-3">
                               <span className="text-sm text-gray-600">
                                 Qty: 1
                               </span>
-                              <span className="text-sm text-gray-600">
-                                {item.weight && (() => {
-                                  const w = item.weight;
-                                  const ws = String(w).trim();
-                                  return /g$/i.test(ws) ? ws : `${ws}g`;
-                                })()}
-                              </span>
                               <button
-                                onClick={() => addToCart(item, 1)}
-                                className="px-6 py-3 font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all duration-300 transform hover:from-amber-600 hover:to-orange-600 hover:scale-105 active:scale-95 hover:shadow-xl"
+                                onClick={() => handleAddToCartClick(item)}
+                                className={`px-6 py-3 font-semibold text-white rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:shadow-xl ${
+                                  clickedItems.has(item.id)
+                                    ? "bg-gradient-to-r from-green-500 to-green-600"
+                                    : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                                }`}
                               >
                                 Add to Cart
                               </button>
                             </div>
                           </div>
+
+                          {/* Weight at bottom center for search results items */}
+                          {item.weight && (
+                            <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
+                              <div className="px-2 py-1 rounded-full backdrop-blur-sm bg-black/60 sm:bg-black/50 sm:px-3 sm:py-1">
+                                <span className="text-xs font-semibold text-white sm:text-sm">
+                                  {parseFloat(
+                                    String(item.weight).replace("g", "")
+                                  ).toFixed(2)}{" "}
+                                  g
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1504,15 +1796,19 @@ const UserDashboard = () => {
                         <h4 className="text-base font-semibold text-gray-900">
                           {item.name}
                         </h4>
-                        <p className="text-sm text-gray-600">
-                          {item.category}
-                        </p>
+                        <p className="text-sm text-gray-600">{item.category}</p>
                         <p className="text-xs text-gray-500">
-                          Weight: {(() => {
+                          Weight:{" "}
+                          {(() => {
                             const w = item.weight;
                             if (!w) return "N/A";
                             const ws = String(w).trim();
-                            return /g$/i.test(ws) ? ws : `${ws}g`;
+                            const weightNum =
+                              parseFloat(ws.replace("g", "")) || 0;
+                            const totalWeight = weightNum * item.quantity;
+                            return `${ws} × ${
+                              item.quantity
+                            } = ${totalWeight.toFixed(1)}g`;
                           })()}
                         </p>
                       </div>
@@ -1541,6 +1837,12 @@ const UserDashboard = () => {
                     <div className="flex justify-between text-gray-600">
                       <span>Total Quantity: {getCartItemCount()}</span>
                       <span>Items ({cart.length})</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Total Weight:</span>
+                      <span className="font-medium text-amber-600">
+                        {getCartTotalWeight()}g
+                      </span>
                     </div>
                   </div>
 
@@ -1653,7 +1955,7 @@ const UserDashboard = () => {
               {/* Order Header */}
               <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
+                  <div className="mb-4">
                     <h4 className="text-lg font-semibold text-gray-900">
                       Order #{selectedOrder.id}
                     </h4>
@@ -1663,6 +1965,20 @@ const UserDashboard = () => {
                       at{" "}
                       {new Date(selectedOrder.bookingDate).toLocaleTimeString()}
                     </p>
+                    {selectedOrder.weight && (
+                      <p className="mt-1 text-sm font-medium text-amber-600">
+                        Total Weight:{" "}
+                        {(() => {
+                          const w = selectedOrder.weight;
+                          const ws = String(w).trim();
+                          const weightNum =
+                            parseFloat(ws.replace("g", "")) || 0;
+                          const totalWeight =
+                            weightNum * selectedOrder.quantity;
+                          return `${totalWeight.toFixed(1)}g`;
+                        })()}
+                      </p>
+                    )}
                   </div>
                   <span
                     className={`inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full ${
@@ -1691,7 +2007,19 @@ const UserDashboard = () => {
                         </p>
                         {selectedOrder.weight && (
                           <p className="text-xs text-gray-500">
-                            Weight: {selectedOrder.weight}
+                            Weight:{" "}
+                            {(() => {
+                              const w = selectedOrder.weight;
+                              if (!w) return "N/A";
+                              const ws = String(w).trim();
+                              const weightNum =
+                                parseFloat(ws.replace("g", "")) || 0;
+                              const totalWeight =
+                                weightNum * selectedOrder.quantity;
+                              return `${ws} × ${
+                                selectedOrder.quantity
+                              } = ${totalWeight.toFixed(1)}g`;
+                            })()}
                           </p>
                         )}
                       </div>
