@@ -493,8 +493,6 @@ const AdminCategoryPage = () => {
                           <option value="weight-desc">
                             Weight: High to Low
                           </option>
-                          <option value="name">Name: A-Z</option>
-                          <option value="name-desc">Name: Z-A</option>
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
                       </div>
