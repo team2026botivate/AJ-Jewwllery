@@ -12,14 +12,10 @@ import {
   BookOpen,
   LogOut,
   Search,
-  Filter,
   Edit3,
   Eye,
-  Grid3X3,
-  List,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Star,
   Gem,
   Crown,
@@ -31,17 +27,12 @@ import {
   Shirt,
   Menu,
   ArrowUp,
-  ShoppingCart,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import Subcategories from "../components/Subcategories";
 
 const AdminDashboard = () => {
   const { logout } = useAuth();
-  const [minWeight, setMinWeight] = useState("");
-  const [maxWeight, setMaxWeight] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("weight");
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -356,11 +347,6 @@ const AdminDashboard = () => {
 
   const totalPages = Math.ceil(filteredJewellery.length / itemsPerPage);
 
-  const addToCart = (item, quantity) => {
-    // For admin dashboard, we could add items to a temporary cart for testing purposes
-    alert(`Added ${item.name} to cart (Admin Mode)`);
-  };
-
   useEffect(() => {
     if (newJewellery.image) {
       setImagePreview(newJewellery.image);
@@ -411,55 +397,22 @@ const AdminDashboard = () => {
 
   const handleAddJewellery = (e) => {
     e.preventDefault();
-    if (
-      newJewellery.category &&
-      newJewellery.name &&
-      newJewellery.image &&
-      newJewellery.weight
-    ) {
+    if (newJewellery.category && newJewellery.name && newJewellery.image) {
       if (editingItem) {
         // Update existing item
         updateJewellery(editingItem.id, newJewellery);
         alert("Product updated successfully!");
       } else {
-        // Add new item to jewellery context
+        // Add new item
         addJewellery({
           ...newJewellery,
           price: 0,
           quantity: 1,
         });
-
-        // Add new item to categoryImages for gallery display
-        const weight = newJewellery.weight || "0g";
-        const newPhoto = {
-          url: newJewellery.image,
-          description: newJewellery.description || newJewellery.name,
-          weight: weight,
-        };
-
-        setCategoryImages((prev) => {
-          const updated = { ...prev };
-          if (!updated[newJewellery.category]) {
-            updated[newJewellery.category] = {};
-          }
-
-          // Add to "Default" subcategory or create new subcategory
-          if (!updated[newJewellery.category]["Default"]) {
-            updated[newJewellery.category]["Default"] = [];
-          }
-
-          updated[newJewellery.category]["Default"].push(newPhoto);
-          return updated;
-        });
-
-        alert("Photo added to gallery successfully!");
+        alert("Product added successfully!");
       }
 
       resetForm();
-    } else {
-      alert(
-        "Please fill in all required fields: Category, Name, Weight, and Photo"
-      );
     }
   };
 
@@ -501,76 +454,14 @@ const AdminDashboard = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (limit to 2MB to prevent header overflow)
-      if (file.size > 2 * 1024 * 1024) {
-        alert("File size too large. Please select an image smaller than 2MB.");
-        return;
-      }
-
-      // Check file type
-      if (!file.type.startsWith("image/")) {
-        alert("Please select a valid image file.");
-        return;
-      }
-
-      // Compress image if needed
-      if (file.size > 500 * 1024) {
-        // If larger than 500KB, compress
-        compressImage(file).then((compressedBlob) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const imageUrl = e.target.result;
-            setNewJewellery({ ...newJewellery, image: imageUrl });
-            setImagePreview(imageUrl);
-          };
-          reader.readAsDataURL(compressedBlob);
-        });
-      } else {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const imageUrl = e.target.result;
-          setNewJewellery({ ...newJewellery, image: imageUrl });
-          setImagePreview(imageUrl);
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  };
-
-  // Function to compress image before upload
-  const compressImage = (
-    file,
-    maxWidth = 800,
-    maxHeight = 600,
-    quality = 0.8
-  ) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-
-      img.onload = () => {
-        // Calculate new dimensions
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        // Draw and compress
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(resolve, "image/jpeg", quality);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        setNewJewellery({ ...newJewellery, image: imageUrl });
+        setImagePreview(imageUrl);
       };
-
-      img.src = URL.createObjectURL(file);
-    });
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleLogout = () => {
@@ -653,13 +544,13 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex overflow-x-hidden flex-col pb-20 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex overflow-x-hidden flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex flex-1">
         {/* Mobile Menu Button */}
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="fixed top-0 left-1 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
+            className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -752,160 +643,31 @@ const AdminDashboard = () => {
           className="flex overflow-hidden overflow-x-hidden flex-col flex-1 min-w-0 lg:ml-72"
           style={{ scrollBehavior: "auto" }}
         >
-          {/* Top Bar */}
-          <header className="p-4 bg-white border-b border-gray-200 shadow-sm lg:p-6">
-            <div className="flex flex-col justify-between items-start space-y-4 lg:flex-row lg:items-center lg:space-y-0">
-              <div className="flex-1 max-w-lg"></div>
-
-              {activeTab === "jewellery" && (
-                <div className="flex items-center space-x-4">
-                  {/* Category Filter */}
-                  <div className="flex items-center space-x-2">
-                    <Filter className="w-5 h-5 text-gray-600" />
-                    {/* Mobile Category Dropdown */}
-                    <div className="relative w-full lg:hidden">
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => {
-                          setSelectedCategory(e.target.value);
-                          if (
-                            (selectedCategory !== "All" &&
-                              e.target.value === "All") ||
-                            (selectedCategory === "All" &&
-                              e.target.value !== "All")
-                          ) {
-                            setCurrentPage(1);
-                          }
-                        }}
-                        className="px-4 py-2 w-full bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500"
-                      >
-                        {uniqueCategories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat} ({categoryStats[cat] || 0})
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
-                    </div>
-                    {/* Desktop Category Pills */}
-                    <div className="hidden overflow-x-auto p-1 max-w-2xl bg-gray-100 rounded-lg lg:flex scrollbar-hide">
-                      {uniqueCategories.map((cat) => {
-                        // Define icons for each category
-                        const getCategoryIcon = (category) => {
-                          switch (category) {
-                            case "All":
-                              return Package;
-                            case "Animals":
-                              return Heart;
-                            case "Arabic Style 21k":
-                              return Crown;
-                            case "Bracelets":
-                              return Circle;
-                            case "Mine":
-                              return Gem;
-                            case "SET":
-                              return Sparkles;
-                            case "Pendant":
-                              return Heart;
-                            case "Man Collection":
-                              return Shirt;
-                            case "Rings":
-                              return Circle;
-                            case "Earrings":
-                              return Sparkles;
-                            default:
-                              return Package;
-                          }
-                        };
-                        const IconComponent = getCategoryIcon(cat);
-
-                        return (
-                          <button
-                            key={cat}
-                            onClick={() => {
-                              setSelectedCategory(cat);
-                              // Only reset to page 1 if switching from a filtered category to "All" or vice versa
-                              if (
-                                (selectedCategory !== "All" && cat === "All") ||
-                                (selectedCategory === "All" && cat !== "All")
-                              ) {
-                                setCurrentPage(1);
-                              }
-                            }}
-                            className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
-                              selectedCategory === cat
-                                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md transform scale-105"
-                                : "text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm"
-                            }`}
-                          >
-                            <IconComponent className="flex-shrink-0 w-4 h-4" />
-                            <span>{cat}</span>
-                            <span className="text-xs opacity-75">
-                              ({categoryStats[cat] || 0})
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex p-1 bg-gray-100 rounded-lg">
-                    <button
-                      onClick={() => setViewMode("grid")}
-                      className={`p-2 rounded ${
-                        viewMode === "grid" ? "bg-white shadow-sm" : ""
-                      }`}
-                    >
-                      <Grid3X3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode("list")}
-                      className={`p-2 rounded ${
-                        viewMode === "list" ? "bg-white shadow-sm" : ""
-                      }`}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                  </div>
-
+          {/* Content Area */}
+          <main className="flex-1 p-4 pt-20 pb-28 min-h-screen sm:p-6 lg:pb-6 lg:pt-6">
+            {/* Categories Tab */}
+            {activeTab === "categories" && (
+              <div className="space-y-6">
+                <div className="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center sm:gap-0">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Categories
+                  </h2>
                   <button
-                    onClick={() => setShowAddModal(true)}
-                    className="flex items-center px-6 py-2 space-x-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                    onClick={() => setShowAddCategoryModal(true)}
+                    className="px-4 py-2 w-full text-white bg-blue-500 rounded-lg transition-colors sm:w-auto hover:bg-blue-600"
                   >
-                    <Plus className="w-5 h-5" />
-                    <span>Add Jewellery</span>
+                    Add Category
                   </button>
                 </div>
-              )}
-            </div>
-          </header>
 
-          {/* Content Area */}
-          <main className="flex-1 p-4 pb-28 sm:p-6 lg:pb-6">
-            <>
-              {/* Categories Tab */}
-              {activeTab === "categories" && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Categories
-                    </h2>
-                    <button
-                      onClick={() => setShowAddCategoryModal(true)}
-                      className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-                    >
-                      Add Category
-                    </button>
-                  </div>
-
-                  {!selectedCategory || selectedCategory === "All" ? (
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {!selectedCategory || selectedCategory === "All" ? (
+                  uniqueCategories.length > 1 ? (
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {uniqueCategories.slice(1).map((category) => (
                         <div
                           key={category}
                           onClick={() => {
-                            setSelectedCategory(category);
-                            setCurrentPage(1);
+                            navigate(`/category/${category}`);
                           }}
                           className="overflow-hidden relative rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
                         >
@@ -913,20 +675,19 @@ const AdminDashboard = () => {
                             <img
                               src={getCategoryCover(category)}
                               alt={category}
-                              className="object-cover w-full h-56 transition-transform duration-500 sm:h-52 md:h-60 group-hover:scale-105"
+                              className="object-cover w-full h-48 transition-transform duration-500 sm:h-52 md:h-56 group-hover:scale-105"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10" />
-                            <div className="absolute right-0 bottom-0 left-0 p-4">
+                            <div className="absolute right-0 bottom-0 left-0 p-3 sm:p-4">
                               <div className="flex justify-between items-end">
                                 <div>
-                                  <h3 className="text-lg font-bold text-white">
+                                  <h3 className="text-base font-bold text-white sm:text-lg">
                                     {category}
                                   </h3>
-                                  <p className="text-xs text-white/80">
-                                    Tap to view all photos
+                                  <p className="text-xs sm:text-sm text-white/80">
+                                    Tap to view collection
                                   </p>
                                 </div>
-                                {/* Removed Add to Cart button for admin */}
                               </div>
                             </div>
                           </div>
@@ -934,1003 +695,715 @@ const AdminDashboard = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      {/* Header with Back Button */}
-                      <div className="flex justify-between items-center">
-                        <div className="space-y-4">
-                          <h2 className="text-2xl font-bold text-gray-900">
-                            {selectedCategory} Collection
-                          </h2>
-                          <div className="text-sm text-gray-600">
-                            Showing all photos from {selectedCategory} category
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center px-4 py-2 space-x-2 text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg transition-all hover:from-green-600 hover:to-green-700"
-                          >
-                            <Plus className="w-4 h-4" />
-                            <span>Add Photo</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedCategory("All");
-                              setCurrentPage(1);
-                              setShowFilters(false);
-                            }}
-                            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
-                          >
-                            <ChevronLeft className="mr-1 w-4 h-4" />
-                            Back to Categories
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Filter and Sort Controls - Sticky */}
-                      <div className="sticky top-16 md:top-24 z-50 p-3 md:p-4 bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex flex-wrap gap-2 md:gap-4 justify-between items-center">
-                          <div className="flex flex-wrap gap-2 md:gap-3 items-center">
-                            <button
-                              onClick={() => setShowFilters(!showFilters)}
-                              className="flex items-center px-2 md:px-3 py-1.5 md:py-2 space-x-1 md:space-x-2 text-xs md:text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
-                            >
-                              <Filter className="w-3 h-3 md:w-4 md:h-4" />
-                              <span className="hidden sm:inline">Filters</span>
-                              <span className="sm:hidden">Filter</span>
-                            </button>
-
-                            {/* Sort Dropdown */}
-                            <div className="relative">
-                              <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="block px-2 md:px-3 py-1.5 md:py-2 pr-6 md:pr-8 w-full text-xs md:text-sm text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                              >
-                                <option value="weight">
-                                  Weight: Low to High
-                                </option>
-                                <option value="weight-desc">
-                                  Weight: High to Low
-                                </option>
-                                <option value="name">Name: A-Z</option>
-                                <option value="name-desc">Name: Z-A</option>
-                              </select>
-                              <div className="flex absolute inset-y-0 right-0 items-center px-1 md:px-2 pointer-events-none">
-                                <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-1 md:space-x-3">
-                            <button
-                              onClick={() => setViewMode("grid")}
-                              className={`p-1.5 md:p-2 rounded-lg transition-colors ${
-                                viewMode === "grid"
-                                  ? "bg-amber-100 text-amber-600"
-                                  : "text-gray-500 hover:bg-gray-100"
-                              }`}
-                              title="Grid View"
-                            >
-                              <Grid3X3 className="w-4 h-4 md:w-5 md:h-5" />
-                            </button>
-                            <button
-                              onClick={() => setViewMode("list")}
-                              className={`p-1.5 md:p-2 rounded-lg transition-colors ${
-                                viewMode === "list"
-                                  ? "bg-amber-100 text-amber-600"
-                                  : "text-gray-500 hover:bg-gray-100"
-                              }`}
-                              title="List View"
-                            >
-                              <List className="w-4 h-4 md:w-5 md:h-5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Expanded Filters */}
-                        {showFilters && (
-                          <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-200 animate-fade-in">
-                            <h3 className="mb-2 md:mb-3 text-xs md:text-sm font-semibold text-gray-700">
-                              Filter by Weight (grams)
-                            </h3>
-                            <div className="flex gap-2 md:gap-4 items-center">
-                              <div className="flex-1">
-                                <label className="block mb-1 text-xs text-gray-600">
-                                  Min Weight
-                                </label>
-                                <input
-                                  type="number"
-                                  value={minWeight}
-                                  onChange={(e) => setMinWeight(e.target.value)}
-                                  placeholder="Min"
-                                  className="block px-2 md:px-3 py-1.5 md:py-2 w-full text-xs md:text-sm text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <label className="block mb-1 text-xs text-gray-600">
-                                  Max Weight
-                                </label>
-                                <input
-                                  type="number"
-                                  value={maxWeight}
-                                  onChange={(e) => setMaxWeight(e.target.value)}
-                                  placeholder="Max"
-                                  className="block px-2 md:px-3 py-1.5 md:py-2 w-full text-xs md:text-sm text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Items Grid */}
-                      <div
-                        className={`grid gap-4 sm:gap-6 transition-all duration-300 ${
-                          viewMode === "grid"
-                            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                            : "grid-cols-1"
-                        }`}
+                    <div className="py-16 text-center bg-white rounded-2xl border border-gray-200">
+                      <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
+                      <h3 className="mb-2 text-xl font-medium text-gray-900">
+                        No categories yet
+                      </h3>
+                      <p className="mb-6 text-gray-600">
+                        Create your first category to organize your jewellery
+                        collection
+                      </p>
+                      <button
+                        onClick={() => setShowAddCategoryModal(true)}
+                        className="px-6 py-3 text-white bg-blue-500 rounded-xl shadow-lg transition-colors hover:bg-blue-600"
                       >
-                        {Object.entries(
-                          categoryImages[selectedCategory] || {}
-                        ).flatMap(([subcategory, images]) =>
-                          images
-                            .filter((image) => {
-                              const weightStr =
-                                typeof image === "string"
-                                  ? ""
-                                  : image.weight || "";
-                              const weightNum =
-                                parseFloat(weightStr.replace("g", "")) || 0;
-                              const min = minWeight ? parseFloat(minWeight) : 0;
-                              const max = maxWeight
-                                ? parseFloat(maxWeight)
-                                : Infinity;
-                              return weightNum >= min && weightNum <= max;
-                            })
-                            .sort((a, b) => {
-                              const aWeight =
-                                typeof a === "string" ? "" : a.weight || "";
-                              const bWeight =
-                                typeof b === "string" ? "" : b.weight || "";
-                              const aNum =
-                                parseFloat(aWeight.replace("g", "")) || 0;
-                              const bNum =
-                                parseFloat(bWeight.replace("g", "")) || 0;
-
-                              const aName =
-                                typeof a === "string"
-                                  ? a
-                                  : `${selectedCategory} ${subcategory}`;
-                              const bName =
-                                typeof b === "string"
-                                  ? b
-                                  : `${selectedCategory} ${subcategory}`;
-
-                              switch (sortBy) {
-                                case "weight-desc":
-                                  return bNum - aNum;
-                                case "name":
-                                  return aName.localeCompare(bName);
-                                case "name-desc":
-                                  return bName.localeCompare(aName);
-                                case "weight":
-                                default:
-                                  return aNum - bNum;
-                              }
-                            })
-                            .map((image, index) => {
-                              const imageUrl =
-                                typeof image === "string" ? image : image.url;
-                              const imageDesc =
-                                typeof image === "string"
-                                  ? `${selectedCategory} ${subcategory}`
-                                  : image.description ||
-                                    `${selectedCategory} ${subcategory}`;
-                              const imageWeight =
-                                typeof image === "string"
-                                  ? ""
-                                  : image.weight || "";
-                              const itemId = `${selectedCategory}-${subcategory}-${index}`;
-
-                              return (
-                                <div
-                                  key={itemId}
-                                  className={`overflow-hidden relative rounded-xl border border-gray-200 shadow-md transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 ${
-                                    viewMode === "list" ? "flex" : ""
-                                  }`}
-                                >
-                                  <div
-                                    className={`${
-                                      viewMode === "list"
-                                        ? "w-32 h-32"
-                                        : "aspect-square"
-                                    } overflow-hidden relative`}
-                                  >
-                                    <img
-                                      src={imageUrl}
-                                      alt={imageDesc}
-                                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                  </div>
-
-                                  <div
-                                    className={`${
-                                      viewMode === "list"
-                                        ? "flex-1 p-4"
-                                        : "absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10"
-                                    }`}
-                                  >
-                                    <div
-                                      className={`${
-                                        viewMode === "list"
-                                          ? "flex justify-between items-start"
-                                          : "absolute right-0 bottom-0 left-0 p-4"
-                                      }`}
-                                    >
-                                      <div>
-                                        <h3
-                                          className={`text-lg font-bold ${
-                                            viewMode === "list"
-                                              ? "text-gray-900"
-                                              : "text-white"
-                                          }`}
-                                        >
-                                          {subcategory}
-                                        </h3>
-                                      
-                                      </div>
-                                      {/* Removed Add to Cart button for admin */}
-                                    </div>
-                                    {/* Weight at bottom center for gallery items (category view) */}
-                                    {selectedCategory !== "All" &&
-                                      imageWeight && (
-                                        <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
-                                          <div className="px-3 py-1 rounded-full border backdrop-blur-sm bg-black/70 sm:bg-black/60 sm:px-4 sm:py-2 border-white/20">
-                                            <span className="text-xs font-bold text-white sm:text-sm">
-                                              {parseFloat(
-                                                imageWeight.replace("g", "")
-                                              ).toFixed(2)}{" "}
-                                              <span className="text-amber-300">
-                                                g
-                                              </span>
-                                            </span>
-                                          </div>
-                                        </div>
-                                      )}
-                                  </div>
-                                </div>
-                              );
-                            })
-                        )}
-                      </div>
+                        Create First Category
+                      </button>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* Jewellery Catalog */}
-              {activeTab === "jewellery" && (
-                <div className="space-y-6">
-                  {/* Items Grid/List */}
-                  {paginatedItems.length > 0 ? (
-                    <>
-                      <div
-                        className={`grid gap-4 sm:gap-6 transition-all duration-300 ease-in-out animate-fade-in ${
-                          viewMode === "grid"
-                            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                            : "grid-cols-1"
-                        }`}
-                      >
-                        {paginatedItems.map((item) => (
+                  )
+                ) : (
+                  <Subcategories
+                    selectedCategory={selectedCategory}
+                    categoryImages={categoryImages}
+                    setCategoryImages={setCategoryImages}
+                    setSelectedCategory={setSelectedCategory}
+                  />
+                )}
+              </div>
+            )}
+            {/* Jewellery Catalog */}
+            {activeTab === "jewellery" && (
+              <div className="space-y-6">
+                {/* Items Grid/List */}
+                {paginatedItems.length > 0 ? (
+                  <>
+                    <div
+                      className={`grid gap-4 sm:gap-6 transition-all duration-300 ease-in-out animate-fade-in ${
+                        viewMode === "grid"
+                          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                          : "grid-cols-1"
+                      }`}
+                    >
+                      {paginatedItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-xl hover:border-amber-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden min-h-[400px] ${
+                            viewMode === "list" ? "flex" : ""
+                          }`}
+                        >
                           <div
-                            key={item.id}
-                            className={`bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-xl hover:border-amber-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden min-h-[400px] ${
-                              viewMode === "list" ? "flex" : ""
-                            }`}
+                            className={`${
+                              viewMode === "list"
+                                ? "w-32 h-32 flex-shrink-0"
+                                : "aspect-square"
+                            } overflow-hidden bg-gray-100`}
                           >
-                            <div
-                              className={`${
-                                viewMode === "list"
-                                  ? "w-32 h-32 flex-shrink-0"
-                                  : "aspect-square"
-                              } overflow-hidden bg-gray-100`}
-                            >
-                              {item.image ? (
-                                <img
-                                  src={item.image}
-                                  alt={item.name || "Product image"}
-                                  className="object-cover w-full h-full transition-transform duration-300 hover:scale-110"
-                                />
-                              ) : (
-                                <div className="flex justify-center items-center w-full h-full text-gray-400">
-                                  <Package className="w-12 h-12" />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex flex-col flex-1 p-4">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="flex-1">
-                                  <h4 className="mb-1 text-xl font-bold leading-tight text-gray-900">
-                                    {item.name || "Unnamed Product"}
-                                  </h4>
-                                  <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
-                                    {item.category || "No category"}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <p className="flex-1 mb-4 text-sm leading-relaxed text-gray-600">
-                                {item.description || "No description available"}
-                              </p>
-
-                              <div className="flex justify-end items-center mt-auto">
-                                {/* Placeholder for future actions */}
-                              </div>
-                            </div>
-
-                            {/* Weight at bottom center for grid view */}
-                            {item.weight && (
-                              <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
-                                <div className="px-3 py-1 rounded-full border backdrop-blur-sm bg-black/70 sm:bg-black/60 sm:px-4 sm:py-2 border-white/20">
-                                  <span className="text-xs font-bold text-white sm:text-sm">
-                                    {parseFloat(item.weight).toFixed(2)}{" "}
-                                    <span className="text-amber-300">g</span>
-                                  </span>
-                                </div>
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name || "Product image"}
+                                className="object-cover w-full h-full transition-transform duration-300 hover:scale-110"
+                              />
+                            ) : (
+                              <div className="flex justify-center items-center w-full h-full text-gray-400">
+                                <Package className="w-12 h-12" />
                               </div>
                             )}
                           </div>
-                        ))}
-                      </div>
 
-                      {/* Pagination */}
-                      {totalPages > 1 && (
-                        <div className="flex justify-center items-center mt-12 space-x-1">
-                          <button
-                            onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:shadow-none"
-                            title="First Page"
-                          >
-                            First
-                          </button>
+                          <div className="flex flex-col flex-1 p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <h4 className="mb-1 text-xl font-bold leading-tight text-gray-900">
+                                  {item.name || "Unnamed Product"}
+                                </h4>
+                                <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
+                                  {item.category || "No category"}
+                                </p>
+                              </div>
+                            </div>
 
-                          {/* Previous Button */}
-                          <button
-                            onClick={() =>
-                              setCurrentPage((prev) => Math.max(1, prev - 1))
-                            }
-                            disabled={currentPage === 1}
-                            className="px-3 py-1 bg-white rounded-lg border border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 hover:shadow-md disabled:hover:bg-white disabled:hover:shadow-none"
-                          >
-                            <ChevronLeft className="w-3 h-3" />
-                          </button>
+                            <p className="flex-1 mb-4 text-sm leading-relaxed text-gray-600">
+                              {item.description || "No description available"}
+                            </p>
 
-                          {/* Page Numbers */}
-                          {[...Array(totalPages)].map((_, i) => (
-                            <button
-                              key={i + 1}
-                              onClick={() => setCurrentPage(i + 1)}
-                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                                currentPage === i + 1
-                                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg transform scale-105"
-                                  : "border border-gray-300 bg-white hover:bg-gray-100 hover:shadow-md"
-                              }`}
-                            >
-                              {i + 1}
-                            </button>
-                          ))}
-
-                          {/* Next Button */}
-                          <button
-                            onClick={() =>
-                              setCurrentPage((prev) =>
-                                Math.min(totalPages, prev + 1)
-                              )
-                            }
-                            disabled={currentPage === totalPages}
-                            className="px-3 py-1 bg-white rounded-lg border border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 hover:shadow-md disabled:hover:bg-white disabled:hover:shadow-none"
-                          >
-                            <ChevronRight className="w-3 h-3" />
-                          </button>
-
-                          {/* Last Button */}
-                          <button
-                            onClick={() => setCurrentPage(totalPages)}
-                            disabled={currentPage === totalPages}
-                            className="px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:shadow-none"
-                            title="Last Page"
-                          >
-                            Last
-                          </button>
+                            <div className="flex justify-end items-center mt-auto">
+                              {/* Placeholder for future actions */}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="py-16 text-center">
-                      <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
-                      <h3 className="mb-2 text-lg font-medium text-gray-900">
-                        No items found
-                      </h3>
-                      <p className="text-gray-500">
-                        {searchTerm
-                          ? `No items match "${searchTerm}"`
-                          : selectedCategory !== "All"
-                          ? `No items in ${selectedCategory} category`
-                          : "No jewellery items added yet"}
-                      </p>
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
 
-              {/* Bookings Tab */}
-              {activeTab === "bookings" && (
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center items-center mt-12 space-x-1">
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:shadow-none"
+                          title="First Page"
+                        >
+                          First
+                        </button>
+
+                        {/* Previous Button */}
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(1, prev - 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 bg-white rounded-lg border border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 hover:shadow-md disabled:hover:bg-white disabled:hover:shadow-none"
+                        >
+                          <ChevronLeft className="w-3 h-3" />
+                        </button>
+
+                        {/* Page Numbers */}
+                        {[...Array(totalPages)].map((_, i) => (
+                          <button
+                            key={i + 1}
+                            onClick={() => setCurrentPage(i + 1)}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                              currentPage === i + 1
+                                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg transform scale-105"
+                                : "border border-gray-300 bg-white hover:bg-gray-100 hover:shadow-md"
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+
+                        {/* Next Button */}
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(totalPages, prev + 1)
+                            )
+                          }
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 bg-white rounded-lg border border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 hover:shadow-md disabled:hover:bg-white disabled:hover:shadow-none"
+                        >
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+
+                        {/* Last Button */}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:shadow-none"
+                          title="Last Page"
+                        >
+                          Last
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-16 text-center">
+                    <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">
+                      No items found
+                    </h3>
+                    <p className="text-gray-500">
+                      {searchTerm
+                        ? `No items match "${searchTerm}"`
+                        : selectedCategory !== "All"
+                        ? `No items in ${selectedCategory} category`
+                        : "No jewellery items added yet"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bookings Tab */}
+            {activeTab === "bookings" && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    User Bookings
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {[
+                            "#",
+                            "Name",
+                            "Category",
+                            "Jewellery",
+                            "Qty",
+                            "Date",
+                          ].map((header) => (
+                            <th
+                              key={header}
+                              className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
+                            >
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {bookings.length ? (
+                          bookings.map((b, i) => (
+                            <tr key={b.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {i + 1}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {b.userName}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {b.category}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {b.jewelleryName}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {b.quantity}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {new Date(b.bookingDate).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan="6"
+                              className="px-6 py-12 text-center text-gray-500"
+                            >
+                              <BookOpen className="mx-auto mb-4 w-12 h-12 text-gray-300" />
+                              <p>No bookings yet</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Users Tab */}
+            {activeTab === "users" && (
+              <div className="space-y-6">
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
                   <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-900">
-                      User Bookings
+                      User Management
                     </h2>
                   </div>
                   <div className="p-6">
-                    <div className="overflow-x-auto rounded-lg border border-gray-200">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            {[
-                              "#",
-                              "Name",
-                              "Category",
-                              "Jewellery",
-                              "Qty",
-                              "Date",
-                            ].map((header) => (
-                              <th
-                                key={header}
-                                className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                              >
-                                {header}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {bookings.length ? (
-                            bookings.map((b, i) => (
-                              <tr key={b.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {i + 1}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {b.userName}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {b.category}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {b.jewelleryName}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {b.quantity}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {new Date(b.bookingDate).toLocaleDateString()}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block">
+                      <div className="overflow-hidden rounded-lg border border-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
                             <tr>
-                              <td
-                                colSpan="6"
-                                className="px-6 py-12 text-center text-gray-500"
-                              >
-                                <BookOpen className="mx-auto mb-4 w-12 h-12 text-gray-300" />
-                                <p>No bookings yet</p>
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Users Tab */}
-              {activeTab === "users" && (
-                <div className="space-y-6">
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        User Management
-                      </h2>
-                    </div>
-                    <div className="p-6">
-                      {/* Desktop Table View */}
-                      <div className="hidden md:block">
-                        <div className="overflow-hidden rounded-lg border border-gray-200">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                {[
-                                  "Name",
-                                  "ID",
-                                  "Password",
-                                  "Status",
-                                  "Actions",
-                                ].map((h) => (
-                                  <th
-                                    key={h}
-                                    className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                                  >
-                                    {h}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {users.map((u) => (
-                                <tr key={u.id} className="hover:bg-gray-50">
-                                  <td className="px-6 py-4 text-sm text-gray-900">
-                                    {u.name}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-gray-900">
-                                    {u.id}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-gray-900">
-                                    {"•".repeat(u.password.length)}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span
-                                      className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
-                                        u.status === "active"
-                                          ? "bg-green-100 text-green-800"
-                                          : "bg-red-100 text-red-800"
-                                      }`}
-                                    >
-                                      {u.status}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-gray-900">
-                                    <button
-                                      onClick={() =>
-                                        console.log("Toggle user status")
-                                      }
-                                      className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-                                        u.status === "active"
-                                          ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                          : "bg-green-100 text-green-800 hover:bg-green-200"
-                                      }`}
-                                    >
-                                      {u.status === "active"
-                                        ? "Deactivate"
-                                        : "Activate"}
-                                    </button>
-                                  </td>
-                                </tr>
+                              {[
+                                "Name",
+                                "ID",
+                                "Password",
+                                "Status",
+                                "Actions",
+                              ].map((h) => (
+                                <th
+                                  key={h}
+                                  className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
+                                >
+                                  {h}
+                                </th>
                               ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      {/* Mobile Card View */}
-                      <div className="space-y-4 md:hidden">
-                        {users.map((u) => (
-                          <div
-                            key={u.id}
-                            className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm transition-shadow hover:shadow-md"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {users.map((u) => (
+                              <tr key={u.id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 text-sm text-gray-900">
                                   {u.name}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  ID: {u.id}
-                                </p>
-                              </div>
-                              <span
-                                className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
-                                  u.status === "active"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {u.status}
-                              </span>
-                            </div>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-900">
+                                  {u.id}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-900">
+                                  {"•".repeat(u.password.length)}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span
+                                    className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                                      u.status === "active"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                    }`}
+                                  >
+                                    {u.status}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-900">
+                                  <button
+                                    onClick={() =>
+                                      console.log("Toggle user status")
+                                    }
+                                    className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
+                                      u.status === "active"
+                                        ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                        : "bg-green-100 text-green-800 hover:bg-green-200"
+                                    }`}
+                                  >
+                                    {u.status === "active"
+                                      ? "Deactivate"
+                                      : "Activate"}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
 
-                            <div className="flex justify-between items-center">
-                              <div className="text-sm text-gray-600">
-                                Password: {"•".repeat(u.password.length)}
-                              </div>
-                              <button
-                                onClick={() => {
-                                  // Toggle user status functionality
-                                  const updatedUsers = users.map((user) =>
-                                    user.id === u.id
-                                      ? {
-                                          ...user,
-                                          status:
-                                            user.status === "active"
-                                              ? "inactive"
-                                              : "active",
-                                        }
-                                      : user
-                                  );
-                                  // Here you would typically update the users state or call an API
-                                  console.log(
-                                    "User status toggled for:",
-                                    u.id,
-                                    "New status:",
+                    {/* Mobile Card View */}
+                    <div className="space-y-4 md:hidden">
+                      {users.map((u) => (
+                        <div
+                          key={u.id}
+                          className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm transition-shadow hover:shadow-md"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                                {u.name}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                ID: {u.id}
+                              </p>
+                            </div>
+                            <span
+                              className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                                u.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {u.status}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm text-gray-600">
+                              Password: {"•".repeat(u.password.length)}
+                            </div>
+                            <button
+                              onClick={() => {
+                                // Toggle user status functionality
+                                const updatedUsers = users.map((user) =>
+                                  user.id === u.id
+                                    ? {
+                                        ...user,
+                                        status:
+                                          user.status === "active"
+                                            ? "inactive"
+                                            : "active",
+                                      }
+                                    : user
+                                );
+                                // Here you would typically update the users state or call an API
+                                console.log(
+                                  "User status toggled for:",
+                                  u.id,
+                                  "New status:",
+                                  u.status === "active" ? "inactive" : "active"
+                                );
+                                // For now, just show an alert
+                                alert(
+                                  `User ${u.name} status changed to ${
                                     u.status === "active"
                                       ? "inactive"
                                       : "active"
-                                  );
-                                  // For now, just show an alert
-                                  alert(
-                                    `User ${u.name} status changed to ${
-                                      u.status === "active"
-                                        ? "inactive"
-                                        : "active"
-                                    }`
-                                  );
-                                }}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                  u.status === "active"
-                                    ? "bg-red-100 text-red-800 hover:bg-red-200"
-                                    : "bg-green-100 text-green-800 hover:bg-green-200"
-                                }`}
-                              >
-                                {u.status === "active"
-                                  ? "Deactivate"
-                                  : "Activate"}
-                              </button>
-                            </div>
+                                  }`
+                                );
+                              }}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                u.status === "active"
+                                  ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                  : "bg-green-100 text-green-800 hover:bg-green-200"
+                              }`}
+                            >
+                              {u.status === "active"
+                                ? "Deactivate"
+                                : "Activate"}
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              )}
-            </>
+              </div>
+            )}
           </main>
-
-          {/* Add/Edit Jewellery Modal */}
-          {showAddModal && (
-            <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-              <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {editingItem ? "Edit Jewellery" : "Add New Jewellery"}
-                  </h3>
-                  <button
-                    onClick={resetForm}
-                    className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleAddJewellery} className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    {/* Category */}
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Category
-                      </label>
-                      <select
-                        value={newJewellery.category}
-                        onChange={(e) =>
-                          setNewJewellery({
-                            ...newJewellery,
-                            category: e.target.value,
-                          })
-                        }
-                        className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                        required
-                      >
-                        <option value="">Select Category</option>
-                        {uniqueCategories.slice(1).map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Name */}
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Name
-                      </label>
-                      <input
-                        type="text"
-                        value={newJewellery.name}
-                        onChange={(e) =>
-                          setNewJewellery({
-                            ...newJewellery,
-                            name: e.target.value,
-                          })
-                        }
-                        placeholder="Jewellery name"
-                        className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      value={newJewellery.description}
-                      onChange={(e) =>
-                        setNewJewellery({
-                          ...newJewellery,
-                          description: e.target.value,
-                        })
-                      }
-                      rows={3}
-                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                      placeholder="Describe the jewellery..."
-                    />
-                  </div>
-
-                  {/* Weight */}
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Weight (grams) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newJewellery.weight || ""}
-                      onChange={(e) =>
-                        setNewJewellery({
-                          ...newJewellery,
-                          weight: e.target.value,
-                        })
-                      }
-                      placeholder="e.g., 15g, 2.5g"
-                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                      required
-                    />
-                  </div>
-
-                  {/* Photo Upload */}
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Upload Photo <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                      required
-                    />
-                  </div>
-
-                  {/* Image Preview */}
-                  {imagePreview && (
-                    <div className="p-4 rounded-xl border border-gray-300">
-                      <p className="mb-3 text-sm font-medium text-gray-700">
-                        Image Preview:
-                      </p>
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="object-cover w-full h-48 rounded-xl"
-                        onError={() => setImagePreview("")}
-                      />
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex pt-6 space-x-4">
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                    >
-                      {editingItem ? "Update" : "Save"} Jewellery
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Add Category Modal */}
-          {showAddCategoryModal && (
-            <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-              <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    Add New Category
-                  </h3>
-                  <button
-                    onClick={resetCategoryForm}
-                    className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleAddCategory} className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    {/* Name */}
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Category Name
-                      </label>
-                      <input
-                        type="text"
-                        value={newCategory.name}
-                        onChange={(e) =>
-                          setNewCategory({
-                            ...newCategory,
-                            name: e.target.value,
-                          })
-                        }
-                        placeholder="Category name"
-                        className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-                    {/* Description */}
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Description
-                      </label>
-                      <input
-                        type="text"
-                        value={newCategory.description}
-                        onChange={(e) =>
-                          setNewCategory({
-                            ...newCategory,
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Category description"
-                        className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-                  {/* Photo Upload */}
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Upload Photo
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCategoryFileUpload}
-                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      required
-                    />
-                  </div>
-                  {/* Image Preview */}
-                  {categoryImagePreview && (
-                    <div className="p-4 rounded-xl border border-gray-300">
-                      <p className="mb-3 text-sm font-medium text-gray-700">
-                        Image Preview:
-                      </p>
-                      <img
-                        src={categoryImagePreview}
-                        alt="Preview"
-                        className="object-cover w-full h-48 rounded-xl"
-                        onError={() => setCategoryImagePreview("")}
-                      />
-                    </div>
-                  )}
-                  {/* Action Buttons */}
-                  <div className="flex pt-6 space-x-4">
-                    <button
-                      type="button"
-                      onClick={resetCategoryForm}
-                      className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
-                    >
-                      Save Category
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Delete Confirmation Modal */}
-          {deleteConfirm && (
-            <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-              <div className="p-6 w-full max-w-md bg-white rounded-2xl shadow-xl">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Confirm Deletion
-                  </h3>
-                  <button
-                    onClick={() => setDeleteConfirm(null)}
-                    className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-
-                <div className="mb-6">
-                  <div className="flex items-center p-4 space-x-4 bg-red-50 rounded-xl border border-red-200">
-                    <img
-                      src={deleteConfirm.image}
-                      alt={deleteConfirm.name}
-                      className="object-cover w-16 h-16 rounded-lg"
-                    />
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {deleteConfirm.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {deleteConfirm.category}
-                      </p>
-                      <p className="text-sm font-medium text-amber-600">
-                        ₹{deleteConfirm.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-4 text-gray-700">
-                    Are you sure you want to delete this item? This action
-                    cannot be undone.
-                  </p>
-                </div>
-
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setDeleteConfirm(null)}
-                    className="flex-1 px-4 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteConfirm}
-                    className="flex-1 px-4 py-3 font-medium text-white bg-red-500 rounded-xl transition-colors hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Back to Top Button */}
-          {showBackToTop && (
-            <button
-              onClick={scrollToTop}
-              className="fixed right-6 bottom-24 z-40 p-3 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
-              title="Back to Top"
-            >
-              <ArrowUp className="w-5 h-5" />
-            </button>
-          )}
-
-          <Footer />
         </div>
       </div>
+
+      <Footer />
+
+      {/* Add/Edit Jewellery Modal */}
+      {showAddModal && (
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
+                {editingItem ? "Edit Jewellery" : "Add New Jewellery"}
+              </h3>
+              <button
+                onClick={resetForm}
+                className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddJewellery} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Category */}
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Category
+                  </label>
+                  <select
+                    value={newJewellery.category}
+                    onChange={(e) =>
+                      setNewJewellery({
+                        ...newJewellery,
+                        category: e.target.value,
+                      })
+                    }
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {uniqueCategories.slice(1).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newJewellery.name}
+                    onChange={(e) =>
+                      setNewJewellery({ ...newJewellery, name: e.target.value })
+                    }
+                    placeholder="Jewellery name"
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  value={newJewellery.description}
+                  onChange={(e) =>
+                    setNewJewellery({
+                      ...newJewellery,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  placeholder="Describe the jewellery..."
+                />
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Upload Photo
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                  required
+                />
+              </div>
+
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="p-4 rounded-xl border border-gray-300">
+                  <p className="mb-3 text-sm font-medium text-gray-700">
+                    Image Preview:
+                  </p>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="object-cover w-full h-48 rounded-xl"
+                    onError={() => setImagePreview("")}
+                  />
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex pt-6 space-x-4">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                >
+                  {editingItem ? "Update" : "Save"} Jewellery
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {showAddCategoryModal && (
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
+                Add New Category
+              </h3>
+              <button
+                onClick={resetCategoryForm}
+                className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCategory} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Name */}
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Category Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newCategory.name}
+                    onChange={(e) =>
+                      setNewCategory({ ...newCategory, name: e.target.value })
+                    }
+                    placeholder="Category name"
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                {/* Description */}
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={newCategory.description}
+                    onChange={(e) =>
+                      setNewCategory({
+                        ...newCategory,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder="Category description"
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              {/* Photo Upload */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Upload Photo
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCategoryFileUpload}
+                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  required
+                />
+              </div>
+              {/* Image Preview */}
+              {categoryImagePreview && (
+                <div className="p-4 rounded-xl border border-gray-300">
+                  <p className="mb-3 text-sm font-medium text-gray-700">
+                    Image Preview:
+                  </p>
+                  <img
+                    src={categoryImagePreview}
+                    alt="Preview"
+                    className="object-cover w-full h-48 rounded-xl"
+                    onError={() => setCategoryImagePreview("")}
+                  />
+                </div>
+              )}
+              {/* Action Buttons */}
+              <div className="flex pt-6 space-x-4">
+                <button
+                  type="button"
+                  onClick={resetCategoryForm}
+                  className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
+                >
+                  Save Category
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+          <div className="p-6 w-full max-w-md bg-white rounded-2xl shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Confirm Deletion
+              </h3>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center p-4 space-x-4 bg-red-50 rounded-xl border border-red-200">
+                <img
+                  src={deleteConfirm.image}
+                  alt={deleteConfirm.name}
+                  className="object-cover w-16 h-16 rounded-lg"
+                />
+                <div>
+                  <h4 className="font-semibold text-gray-900">
+                    {deleteConfirm.name}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {deleteConfirm.category}
+                  </p>
+                  <p className="text-sm font-medium text-amber-600">
+                    ₹{deleteConfirm.price.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 text-gray-700">
+                Are you sure you want to delete this item? This action cannot be
+                undone.
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-3 font-medium text-white bg-red-500 rounded-xl transition-colors hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed right-6 bottom-24 z-40 p-3 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
+          title="Back to Top"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
+
+      <Footer />
     </div>
   );
 };

@@ -1016,9 +1016,17 @@ const UserDashboard = () => {
               {selectedCategory !== "All" && (
                 <div className="space-y-6">
                   {/* Filter and Sort Controls - Sticky */}
-                  <div className="sticky top-16 md:top-24 z-50 p-3 md:p-4 bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex flex-wrap gap-2 md:gap-4 justify-between items-center">
-                      <div className="flex flex-wrap gap-2 md:gap-3 items-center">
+                  <div className="fixed top-0 right-0 left-0 z-50 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-24 md:p-4 md:rounded-xl md:border md:shadow-sm">
+                    <div className="flex flex-wrap gap-2 justify-between items-center md:gap-4">
+                      <div className="flex flex-wrap gap-2 items-center md:gap-3">
+                        <button
+                          onClick={() => setSelectedCategory("All")}
+                          className="flex items-center px-2 md:px-3 py-1.5 md:py-2 space-x-1 md:space-x-2 text-xs md:text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
+                        >
+                          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
+                          <span className="hidden sm:inline">Catalog</span>
+                          <span className="sm:hidden">Back</span>
+                        </button>
                         <button
                           onClick={() => setShowFilters(!showFilters)}
                           className="flex items-center px-2 md:px-3 py-1.5 md:py-2 space-x-1 md:space-x-2 text-xs md:text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
@@ -1042,8 +1050,8 @@ const UserDashboard = () => {
                             <option value="name">Name: A-Z</option>
                             <option value="name-desc">Name: Z-A</option>
                           </select>
-                          <div className="flex absolute inset-y-0 right-0 items-center px-1 md:px-2 pointer-events-none">
-                            <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
+                          <div className="flex absolute inset-y-0 right-0 items-center px-1 pointer-events-none md:px-2">
+                            <ChevronDown className="w-3 h-3 text-gray-500 md:w-4 md:h-4" />
                           </div>
                         </div>
                       </div>
@@ -1076,11 +1084,11 @@ const UserDashboard = () => {
 
                     {/* Expanded Filters */}
                     {showFilters && (
-                      <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-200 animate-fade-in">
-                        <h3 className="mb-2 md:mb-3 text-xs md:text-sm font-semibold text-gray-700">
+                      <div className="p-3 mt-3 bg-gray-50 rounded-xl border border-gray-200 md:mt-4 md:p-4 animate-fade-in">
+                        <h3 className="mb-2 text-xs font-semibold text-gray-700 md:mb-3 md:text-sm">
                           Filter by Weight (grams)
                         </h3>
-                        <div className="flex gap-2 md:gap-4 items-center">
+                        <div className="flex gap-2 items-center md:gap-4">
                           <div className="flex-1">
                             <label className="block mb-1 text-xs text-gray-600">
                               Min Weight
