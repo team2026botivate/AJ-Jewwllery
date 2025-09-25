@@ -113,9 +113,86 @@ const AdminDashboard = () => {
     image: "",
   });
 
-  // Resolve public assets with Vite base (safe join)
+  // LocalStorage keys for dashboard persistence
+  const DASH_CATEGORY_IMAGES_KEY = "adminDash.categoryImages";
+  const DASH_UNIQUE_CATEGORIES_KEY = "adminDash.uniqueCategories";
+
+  // Apply categories & images from Google Sheet response into local state
+  const applyCategoriesFromSheet = (data) => {
+    try {
+      // Normalize to an array of row objects
+      const rows = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.rows)
+        ? data.rows
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
+
+      if (!Array.isArray(rows) || rows.length === 0) return;
+
+      // Extract fields defensively from various possible shapes
+      const extracted = rows
+        .map((r) => {
+          const name =
+            r?.category ||
+            r?.name ||
+            r?.Category ||
+            (Array.isArray(r) ? r[0] : undefined);
+          const image =
+            r?.image ||
+            r?.Image ||
+            r?.imageUrl ||
+            r?.url ||
+            (Array.isArray(r) ? r[2] : undefined);
+          const description =
+            r?.description || r?.desc || (Array.isArray(r) ? r[1] : "");
+          return { name, image, description };
+        })
+        .filter((x) => x.name);
+
+      if (extracted.length === 0) return;
+
+      // Update categories
+      setUniqueCategories((prev) => {
+        const set = new Set(prev);
+        extracted.forEach(({ name }) => {
+          if (name) set.add(String(name));
+        });
+        return Array.from(set);
+      });
+
+      // Update category images
+      setCategoryImages((prev) => {
+        const updated = { ...prev };
+        extracted.forEach(({ name, image, description }) => {
+          if (!name || !image) return;
+          const url = asset(image);
+          const entry = { url, description: description || "", weight: "" };
+          const category = updated[name] || {};
+          const def = Array.isArray(category.Default) ? category.Default : [];
+          const exists = def.some(
+            (i) => (typeof i === "string" ? i : i.url) === url
+          );
+          if (!exists) {
+            updated[name] = { ...category, Default: [...def, entry] };
+          } else {
+            updated[name] = { ...category, Default: def };
+          }
+        });
+        return updated;
+      });
+    } catch (err) {
+      console.error("Failed to apply categories from sheet", err);
+    }
+  };
+
+  // Resolve public assets with Vite base (safe join) and keep http/data URLs intact
   const asset = (name) => {
     if (!name) return name;
+    if (typeof name !== "string") return name;
+    if (name.startsWith("data:")) return name;
+    if (name.startsWith("http://") || name.startsWith("https://")) return name;
     const base = import.meta.env.BASE_URL || "/";
     const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
     const clean = name.startsWith("/") ? name.slice(1) : name;
@@ -306,9 +383,54 @@ const AdminDashboard = () => {
     image: "",
   });
   const [categoryImagePreview, setCategoryImagePreview] = useState("");
+  // LocalStorage key for persisting category image draft
+  const CATEGORY_IMAGE_DRAFT_KEY = "admin.category.imageDraft";
+
+  // Rehydrate any draft category image on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CATEGORY_IMAGE_DRAFT_KEY);
+      if (saved) {
+        setNewCategory((prev) => ({ ...prev, image: saved }));
+        setCategoryImagePreview(saved);
+      }
+    } catch (err) {
+      console.error("Failed to read draft image from localStorage", err);
+    }
+  }, []);
 
   // Categories from context to keep Admin and Catalogue in sync
   const [uniqueCategories, setUniqueCategories] = useState(getCategories());
+
+  // Rehydrate persisted dashboard state on mount (after state declarations)
+  useEffect(() => {
+    try {
+      const savedCats = localStorage.getItem(DASH_UNIQUE_CATEGORIES_KEY);
+      if (savedCats) {
+        const parsed = JSON.parse(savedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setUniqueCategories((prev) => {
+            const set = new Set(parsed.concat(prev));
+            return Array.from(set);
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to rehydrate uniqueCategories", e);
+    }
+
+    try {
+      const savedImages = localStorage.getItem(DASH_CATEGORY_IMAGES_KEY);
+      if (savedImages) {
+        const parsed = JSON.parse(savedImages);
+        if (parsed && typeof parsed === "object") {
+          setCategoryImages((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to rehydrate categoryImages", e);
+    }
+  }, []);
 
   // Category stats for unique categories
   const categoryStats = useMemo(() => {
@@ -318,6 +440,29 @@ const AdminDashboard = () => {
     });
     return stats;
   }, [jewellery, uniqueCategories]);
+
+  // Persist dashboard state when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        DASH_UNIQUE_CATEGORIES_KEY,
+        JSON.stringify(uniqueCategories)
+      );
+    } catch (e) {
+      console.error("Failed to persist uniqueCategories", e);
+    }
+  }, [uniqueCategories]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        DASH_CATEGORY_IMAGES_KEY,
+        JSON.stringify(categoryImages)
+      );
+    } catch (e) {
+      console.error("Failed to persist categoryImages", e);
+    }
+  }, [categoryImages]);
 
   // Filtered and searched jewellery
   const filteredJewellery = useMemo(() => {
@@ -366,6 +511,7 @@ const AdminDashboard = () => {
       try {
         const data = await fetchSheetData();
         setSheetData(data);
+        applyCategoriesFromSheet(data);
       } catch (err) {
         console.error("Failed to load sheet data:", err);
         setError("Failed to load data from Google Sheets");
@@ -477,6 +623,12 @@ const AdminDashboard = () => {
         const imageUrl = e.target.result;
         setNewCategory({ ...newCategory, image: imageUrl });
         setCategoryImagePreview(imageUrl);
+        // Persist the uploaded image so it survives refresh
+        try {
+          localStorage.setItem(CATEGORY_IMAGE_DRAFT_KEY, imageUrl);
+        } catch (err) {
+          console.error("Failed to save draft image to localStorage", err);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -512,20 +664,47 @@ const AdminDashboard = () => {
       });
 
       // Update local state if API call is successful
-      setUniqueCategories((prev) => [...prev, newCategory.name]);
-      setCategoryImages({
+      // Compute next states so we can persist immediately
+      const nextUnique = Array.from(
+        new Set([...uniqueCategories, newCategory.name])
+      );
+      const nextImages = {
         ...categoryImages,
         [newCategory.name]: {
           Default: [newCategory.image],
         },
-      });
+      };
+
+      setUniqueCategories(nextUnique);
+      setCategoryImages(nextImages);
+
+      // Persist immediately to localStorage to survive refresh
+      try {
+        localStorage.setItem(
+          DASH_UNIQUE_CATEGORIES_KEY,
+          JSON.stringify(nextUnique)
+        );
+        localStorage.setItem(
+          DASH_CATEGORY_IMAGES_KEY,
+          JSON.stringify(nextImages)
+        );
+      } catch (e) {
+        console.error("Failed to persist new category to localStorage", e);
+      }
 
       alert(`"${newCategory.name}" category added successfully!`);
+      // Clear draft image from localStorage upon success
+      try {
+        localStorage.removeItem(CATEGORY_IMAGE_DRAFT_KEY);
+      } catch (err) {
+        console.error("Failed to clear draft image from localStorage", err);
+      }
       resetCategoryForm();
 
       // Refresh the sheet data to get the latest changes
       const updatedData = await fetchSheetData();
       setSheetData(updatedData);
+      applyCategoriesFromSheet(updatedData);
     } catch (error) {
       console.error("Error adding category:", error);
       setError(`Failed to add category: ${error.message}`);
@@ -541,6 +720,12 @@ const AdminDashboard = () => {
     setShowAddCategoryModal(false);
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach((input) => (input.value = ""));
+    // Also clear any persisted draft
+    try {
+      localStorage.removeItem(CATEGORY_IMAGE_DRAFT_KEY);
+    } catch (err) {
+      console.error("Failed to clear draft image from localStorage", err);
+    }
   };
 
   return (
@@ -566,7 +751,7 @@ const AdminDashboard = () => {
 
         {/* Sidebar */}
         {sidebarOpen && (
-          <div className="flex overflow-y-auto overflow-x-hidden fixed left-0 top-0 z-50 flex-col h-screen pb-12 w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide">
+          <div className="flex overflow-y-auto overflow-x-hidden fixed top-0 left-0 z-50 flex-col pb-12 w-80 h-screen bg-white border-r border-gray-200 shadow-xl lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">

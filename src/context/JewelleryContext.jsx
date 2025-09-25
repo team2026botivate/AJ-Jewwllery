@@ -394,6 +394,15 @@ export const JewelleryProvider = ({ children }) => {
     localStorage.setItem('bookings-data', JSON.stringify(bookings));
   }, [bookings]);
 
+  // Persist jewellery to localStorage so added data survives reloads
+  useEffect(() => {
+    try {
+      localStorage.setItem('jewellery-data', JSON.stringify(jewellery));
+    } catch (err) {
+      console.error('Failed to persist jewellery-data to localStorage', err);
+    }
+  }, [jewellery]);
+
   // Add new booking
   const addBooking = (bookingData) => {
     const booking = {

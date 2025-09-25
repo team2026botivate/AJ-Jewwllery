@@ -30,34 +30,23 @@ const AdminCategoryPage = () => {
     weight: "",
     image: "",
   });
-  const [photoPreview, setPhotoPreview] = useState("");
-  // Normalize category names from URL to match our keys (e.g., 'Earring' -> 'Earrings')
-  const normalizeCategoryName = (name) => {
-    if (!name) return "All";
-    const map = {
-      earring: "Earrings",
-      earrings: "Earrings",
-      bracelet: "Bracelets",
-      bracelets: "Bracelets",
-      ring: "Rings",
-      set: "SET",
-      men: "Man Collection",
-      "man collection": "Man Collection",
-    };
-    const key = decodeURIComponent(name).replace(/-/g, " ").toLowerCase();
-    return map[key] || decodeURIComponent(name);
-  };
-  const [selectedCategory, setSelectedCategory] = useState(
-    normalizeCategoryName(categoryName)
-  );
-  // Resolve public assets with Vite base (safe join)
+
+  // LocalStorage key for category gallery images
+  const CATEGORY_IMAGES_KEY = "admin.categoryImages";
+
+  // Resolve public assets with Vite base (safe join) and keep http/data URLs intact
   const asset = (name) => {
     if (!name) return name;
+    if (typeof name !== "string") return name;
+    if (name.startsWith("data:")) return name;
+    if (name.startsWith("http://") || name.startsWith("https://")) return name;
     const base = import.meta.env.BASE_URL || "/";
     const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
     const clean = name.startsWith("/") ? name.slice(1) : name;
     return `${cleanBase}/${clean}`;
   };
+
+  // Declare categoryImages BEFORE effects that use it
   const [categoryImages, setCategoryImages] = useState({
     Animals: {
       Lion: [
@@ -257,6 +246,72 @@ const AdminCategoryPage = () => {
       ],
     },
   });
+
+  // Rehydrate saved gallery images from localStorage and merge with defaults
+  useEffect(() => {
+    try {
+      const savedRaw = localStorage.getItem(CATEGORY_IMAGES_KEY);
+      if (!savedRaw) return;
+      const saved = JSON.parse(savedRaw);
+      if (!saved || typeof saved !== "object") return;
+      setCategoryImages((prev) => {
+        const merged = { ...prev };
+        Object.entries(saved).forEach(([cat, groups]) => {
+          const current = merged[cat] || {};
+          const next = { ...current };
+          Object.entries(groups || {}).forEach(([sub, arr]) => {
+            const existing = Array.isArray(current[sub]) ? current[sub] : [];
+            const incoming = Array.isArray(arr) ? arr : [];
+            // Avoid duplicates by URL
+            const existingUrls = new Set(
+              existing.map((i) => (typeof i === "string" ? i : i.url))
+            );
+            const mergedArr = [
+              ...existing,
+              ...incoming.filter((i) => {
+                const u = typeof i === "string" ? i : i.url;
+                return u && !existingUrls.has(u);
+              }),
+            ];
+            next[sub] = mergedArr;
+          });
+          merged[cat] = next;
+        });
+        return merged;
+      });
+    } catch (err) {
+      console.error("Failed to rehydrate category images from localStorage", err);
+    }
+  }, []);
+
+  // Persist gallery images whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(categoryImages));
+    } catch (err) {
+      console.error("Failed to persist category images", err);
+    }
+  }, [categoryImages]);
+  const [photoPreview, setPhotoPreview] = useState("");
+  // Normalize category names from URL to match our keys (e.g., 'Earring' -> 'Earrings')
+  const normalizeCategoryName = (name) => {
+    if (!name) return "All";
+    const map = {
+      earring: "Earrings",
+      earrings: "Earrings",
+      bracelet: "Bracelets",
+      bracelets: "Bracelets",
+      ring: "Rings",
+      set: "SET",
+      men: "Man Collection",
+      "man collection": "Man Collection",
+    };
+    const key = decodeURIComponent(name).replace(/-/g, " ").toLowerCase();
+    return map[key] || decodeURIComponent(name);
+  };
+  const [selectedCategory, setSelectedCategory] = useState(
+    normalizeCategoryName(categoryName)
+  );
 
   // Flattened and filtered items for the gallery (by weight, search, and sort)
   const galleryItems = useMemo(() => {

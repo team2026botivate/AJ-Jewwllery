@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+// Removed jsPDF import as PDF generation is disabled
 import { useAuth } from "../context/AuthContext";
-import { jsPDF } from "jspdf";
 import {
   ShoppingCart,
   History,
@@ -573,35 +573,30 @@ const UserDashboard = () => {
   const confirmOrder = () => {
     console.log("Confirming order, cart:", cart);
 
-    // Generate PDF
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.text('AT Jeweller - Order Confirmation', 20, 30);
-    
-    // Order details
-    doc.setFontSize(12);
-    doc.text(`Order Date: ${new Date().toLocaleDateString()}`, 20, 50);
-    doc.text(`Customer: ${user?.name || "Guest User"}`, 20, 60);
-    doc.text(`Order ID: ${Date.now()}`, 20, 70);
-    
-    // Items
-    doc.text('Items:', 20, 90);
-    let yPosition = 100;
-    cart.forEach((item, index) => {
-      doc.text(`${index + 1}. ${item.name} (${item.category})`, 20, yPosition);
-      doc.text(`   Quantity: ${item.quantity}`, 20, yPosition + 10);
-      doc.text(`   Weight: ${item.weight || "N/A"}`, 20, yPosition + 20);
-      yPosition += 30;
-    });
-    
-    // Total
-    doc.text(`Total Items: ${getCartItemCount()}`, 20, yPosition + 10);
-    doc.text(`Total Weight: ${getCartTotalWeight()}g`, 20, yPosition + 20);
-    
-    // Save the PDF
-    doc.save(`order-${Date.now()}.pdf`);
+    // Removed PDF generation as per user request
+    // const doc = new jsPDF();
+    // // Header
+    // doc.setFontSize(20);
+    // doc.text('AT Jeweller - Order Confirmation', 20, 30);
+    // // Order details
+    // doc.setFontSize(12);
+    // doc.text(`Order Date: ${new Date().toLocaleDateString()}`, 20, 50);
+    // doc.text(`Customer: ${user?.name || "Guest User"}`, 20, 60);
+    // doc.text(`Order ID: ${Date.now()}`, 20, 70);
+    // // Items
+    // doc.text('Items:', 20, 90);
+    // let yPosition = 100;
+    // cart.forEach((item, index) => {
+    //   doc.text(`${index + 1}. ${item.name} (${item.category})`, 20, yPosition);
+    //   doc.text(`   Quantity: ${item.quantity}`, 20, yPosition + 10);
+    //   doc.text(`   Weight: ${item.weight || "N/A"}`, 20, yPosition + 20);
+    //   yPosition += 30;
+    // });
+    // // Total
+    // doc.text(`Total Items: ${getCartItemCount()}`, 20, yPosition + 10);
+    // doc.text(`Total Weight: ${getCartTotalWeight()}g`, 20, yPosition + 20);
+    // // Save the PDF
+    // doc.save(`order-${Date.now()}.pdf`);
 
     // Store booking data for admin to see (if available)
     if (addBooking) {
@@ -803,7 +798,7 @@ const UserDashboard = () => {
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="flex fixed top-0 left-0 z-40 flex-col justify-between w-[85vw] max-w-xs sm:max-w-sm bg-white border-r border-gray-200 shadow-xl h-[110vh] lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-32 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <div className="flex fixed top-0 left-0 z-40 flex-col justify-between w-[85vw] max-w-xs sm:max-w-sm bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
@@ -1009,15 +1004,29 @@ const UserDashboard = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const hasCategoryItems = Array.from(clickedItems).some(id => id && typeof id === 'string' && id.startsWith(category + '-'));
+                                  const hasCategoryItems = Array.from(
+                                    clickedItems
+                                  ).some(
+                                    (id) =>
+                                      id &&
+                                      typeof id === "string" &&
+                                      id.startsWith(category + "-")
+                                  );
                                   if (hasCategoryItems) {
                                     // Remove all items from this category
-                                    const newCart = cart.filter(cartItem => !cartItem.id.startsWith(category + '-'));
+                                    const newCart = cart.filter(
+                                      (cartItem) =>
+                                        !cartItem.id.startsWith(category + "-")
+                                    );
                                     setCart(newCart);
-                                    setClickedItems(prev => {
+                                    setClickedItems((prev) => {
                                       const newSet = new Set(prev);
-                                      Array.from(prev).forEach(id => {
-                                        if (id && typeof id === 'string' && id.startsWith(category + '-')) {
+                                      Array.from(prev).forEach((id) => {
+                                        if (
+                                          id &&
+                                          typeof id === "string" &&
+                                          id.startsWith(category + "-")
+                                        ) {
                                           newSet.delete(id);
                                         }
                                       });
@@ -1030,11 +1039,23 @@ const UserDashboard = () => {
                                     });
                                   } else {
                                     // Add all items from this category
-                                    const allImages = Object.entries(categoryImages[category] || {}).flatMap(([subcategory, images]) =>
+                                    const allImages = Object.entries(
+                                      categoryImages[category] || {}
+                                    ).flatMap(([subcategory, images]) =>
                                       images.map((image, index) => {
-                                        const imageUrl = typeof image === "string" ? image : image.url;
-                                        const imageDesc = typeof image === "string" ? `${category} ${subcategory}` : image.description || `${category} ${subcategory}`;
-                                        const imageWeight = typeof image === "string" ? "" : image.weight || "";
+                                        const imageUrl =
+                                          typeof image === "string"
+                                            ? image
+                                            : image.url;
+                                        const imageDesc =
+                                          typeof image === "string"
+                                            ? `${category} ${subcategory}`
+                                            : image.description ||
+                                              `${category} ${subcategory}`;
+                                        const imageWeight =
+                                          typeof image === "string"
+                                            ? ""
+                                            : image.weight || "";
                                         const itemId = `${category}-${subcategory}-${index}`;
                                         return {
                                           id: itemId,
@@ -1048,29 +1069,48 @@ const UserDashboard = () => {
                                       })
                                     );
                                     const newCart = [...cart];
-                                    allImages.forEach(item => {
-                                      const existingIndex = newCart.findIndex(cartItem => cartItem.id === item.id);
+                                    allImages.forEach((item) => {
+                                      const existingIndex = newCart.findIndex(
+                                        (cartItem) => cartItem.id === item.id
+                                      );
                                       if (existingIndex !== -1) {
                                         newCart[existingIndex].quantity += 1;
                                       } else {
                                         newCart.push({ ...item, quantity: 1 });
                                       }
-                                      setClickedItems((prev) => new Set(prev).add(item.id));
+                                      setClickedItems((prev) =>
+                                        new Set(prev).add(item.id)
+                                      );
                                     });
                                     setCart(newCart);
-                                    const totalWeight = allImages.reduce((sum, item) => {
-                                      const w = parseFloat(String(item.weight).replace("g", "")) || 0;
-                                      return sum + w;
-                                    }, 0);
+                                    const totalWeight = allImages.reduce(
+                                      (sum, item) => {
+                                        const w =
+                                          parseFloat(
+                                            String(item.weight).replace("g", "")
+                                          ) || 0;
+                                        return sum + w;
+                                      },
+                                      0
+                                    );
                                     setToast({
-                                      message: `Added ${allImages.length} ${category} items (${totalWeight.toFixed(1)}g total) to cart!`,
+                                      message: `Added ${
+                                        allImages.length
+                                      } ${category} items (${totalWeight.toFixed(
+                                        1
+                                      )}g total) to cart!`,
                                       type: "success",
                                       duration: 3000,
                                     });
                                   }
                                 }}
                                 className={`p-2 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 ${
-                                  Array.from(clickedItems).some(id => id && typeof id === 'string' && id.startsWith(category + '-'))
+                                  Array.from(clickedItems).some(
+                                    (id) =>
+                                      id &&
+                                      typeof id === "string" &&
+                                      id.startsWith(category + "-")
+                                  )
                                     ? "bg-gradient-to-r from-green-500 to-green-600"
                                     : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                                 }`}
