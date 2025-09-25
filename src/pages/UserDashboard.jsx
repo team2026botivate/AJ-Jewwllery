@@ -797,8 +797,9 @@ const UserDashboard = () => {
       )}
 
       {/* Sidebar */}
-      {sidebarOpen && (
-        <div className="flex fixed top-0 left-0 z-40 flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <div className={`flex fixed top-0 left-0 z-40 flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } sm:translate-x-0`}>
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
@@ -865,11 +866,10 @@ const UserDashboard = () => {
             </button>
           </div>
         </div>
-      )}
 
       {/* Sidebar Toggle Button (when sidebar is hidden) */}
       {!sidebarOpen && (
-        <div className="hidden flex-col items-center py-4 w-16 bg-white border-r border-gray-200 shadow-xl lg:flex">
+        <div className="hidden flex-col items-center py-4 w-16 bg-white border-r border-gray-200 shadow-xl lg:flex lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 mb-4 rounded-lg transition-colors hover:bg-gray-100"
