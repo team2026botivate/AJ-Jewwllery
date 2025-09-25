@@ -798,7 +798,7 @@ const UserDashboard = () => {
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="flex fixed top-0 left-0 z-40 flex-col justify-between w-[85vw] max-w-xs sm:max-w-sm bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <div className="flex fixed top-0 left-0 z-40 flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
