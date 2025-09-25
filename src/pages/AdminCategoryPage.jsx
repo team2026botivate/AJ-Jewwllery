@@ -5,8 +5,6 @@ import { useJewellery } from "../context/JewelleryContext";
 import {
   Plus,
   X,
-  Grid3X3,
-  List,
   Search,
   Filter,
   ChevronLeft,
@@ -20,12 +18,11 @@ const AdminCategoryPage = () => {
   const { user, isLoading } = useAuth();
   const { jewellery } = useJewellery();
 
-  const [viewMode, setViewMode] = useState("grid");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [minWeight, setMinWeight] = useState("");
-  const [maxWeight, setMaxWeight] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("weight");
+  const [minWeight, setMinWeight] = useState("");
+  const [maxWeight, setMaxWeight] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
     subcategory: "",
@@ -341,9 +338,17 @@ const AdminCategoryPage = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        const url = ev.target?.result;
-        setNewPhoto((p) => ({ ...p, image: url }));
-        setPhotoPreview(url);
+        const result = ev.target?.result;
+        console.log("FileReader result:", result); // Debug log
+        if (result) {
+          setNewPhoto((p) => ({ ...p, image: result }));
+          setPhotoPreview(result);
+        } else {
+          console.error("FileReader result is null or undefined");
+        }
+      };
+      reader.onerror = (error) => {
+        console.error("FileReader error:", error);
       };
       reader.readAsDataURL(file);
     }
@@ -357,20 +362,21 @@ const AdminCategoryPage = () => {
 
   const handleAddPhotoSubmit = (e) => {
     e.preventDefault();
-    if (!newPhoto.subcategory || !newPhoto.image) {
-      alert("Please enter a subcategory and choose an image.");
+    if (!newPhoto.image) {
+      alert("Please choose an image.");
       return;
     }
+
+    // Update category images
     setCategoryImages((prev) => {
       const group = prev[selectedCategory] || {};
-      const sub = newPhoto.subcategory;
+      // Save into a default subcategory since we removed subcategory input
+      const sub = "Default";
       const updatedSub = [
         ...(group[sub] || []),
         {
           url: newPhoto.image,
-          description:
-            newPhoto.description ||
-            `${selectedCategory} ${newPhoto.subcategory}`,
+          description: "",
           weight: newPhoto.weight || "",
         },
       ];
@@ -382,7 +388,14 @@ const AdminCategoryPage = () => {
         },
       };
     });
-    resetPhotoForm();
+
+    // Show success message and close modal after a short delay
+    alert("Photo added successfully!");
+
+    // Small delay to let user see the success message
+    setTimeout(() => {
+      resetPhotoForm();
+    }, 500);
   };
 
   // Set selected category based on URL parameter - runs on mount and when categoryName changes
@@ -464,10 +477,6 @@ const AdminCategoryPage = () => {
                       Explore our {selectedCategory.toLowerCase()} collection
                     </p>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {Object.keys(categoryImages[selectedCategory] || {}).length}{" "}
-                    subcategories
-                  </div>
                 </div>
 
                 {/* Sticky Filter/Sort Controls */}
@@ -499,26 +508,6 @@ const AdminCategoryPage = () => {
                     </div>
 
                     <div className="flex gap-2 items-center">
-                      <div className="flex p-1 bg-gray-100 rounded-lg">
-                        <button
-                          onClick={() => setViewMode("grid")}
-                          className={`p-2 rounded ${
-                            viewMode === "grid" ? "bg-white shadow-sm" : ""
-                          }`}
-                          title="Grid View"
-                        >
-                          <Grid3X3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setViewMode("list")}
-                          className={`p-2 rounded ${
-                            viewMode === "list" ? "bg-white shadow-sm" : ""
-                          }`}
-                          title="List View"
-                        >
-                          <List className="w-4 h-4" />
-                        </button>
-                      </div>
                       <button
                         onClick={() => setShowAddPhotoModal(true)}
                         className="px-4 py-2 text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg shadow-md transition-all hover:from-green-600 hover:to-emerald-600"
@@ -565,25 +554,13 @@ const AdminCategoryPage = () => {
                 </div>
 
                 {/* Items Grid */}
-                <div
-                  className={`grid gap-4 sm:gap-6 mt-4 ${
-                    viewMode === "grid"
-                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                      : "grid-cols-1"
-                  }`}
-                >
+                <div className="grid grid-cols-1 gap-4 mt-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {galleryItems.map((gi) => (
                     <div
                       key={gi.id}
-                      className={`overflow-hidden relative rounded-xl border border-gray-200 shadow-md transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 ${
-                        viewMode === "list" ? "flex" : ""
-                      }`}
+                      className="overflow-hidden relative rounded-xl border border-gray-200 shadow-md transition-all duration-300 group hover:shadow-xl hover:-translate-y-1"
                     >
-                      <div
-                        className={`${
-                          viewMode === "list" ? "w-32 h-32" : "aspect-square"
-                        } overflow-hidden relative`}
-                      >
+                      <div className="overflow-hidden relative aspect-square">
                         <img
                           src={gi.url}
                           alt={gi.desc}
@@ -591,24 +568,12 @@ const AdminCategoryPage = () => {
                         />
                       </div>
 
-                      <div
-                        className={`${
-                          viewMode === "list"
-                            ? "flex-1 p-4"
-                            : "absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10"
-                        }`}
-                      >
-                        <div
-                          className={`${
-                            viewMode === "list"
-                              ? "flex justify-between items-start"
-                              : "absolute right-0 bottom-0 left-0 p-4"
-                          }`}
-                        >
+                      <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10">
+                        <div className="absolute right-0 bottom-0 left-0 p-4">
                           <div>{/* Subcategory name removed */}</div>
                         </div>
 
-                        {gi.weight && viewMode !== "list" && (
+                        {gi.weight && (
                           <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
                             <div className="px-3 py-1 rounded-full backdrop-blur-sm bg-black/60 sm:bg-black/50">
                               <span className="text-xs font-semibold text-white sm:text-sm">
@@ -665,40 +630,18 @@ const AdminCategoryPage = () => {
             <form onSubmit={handleAddPhotoSubmit} className="space-y-5">
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Subcategory
+                  Category
                 </label>
                 <input
                   type="text"
-                  list="subcategoryList"
-                  value={newPhoto.subcategory}
-                  onChange={(e) =>
-                    setNewPhoto((p) => ({ ...p, subcategory: e.target.value }))
-                  }
-                  placeholder="e.g. Lion, Gold, Diamond"
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                  required
+                  value={selectedCategory}
+                  readOnly
+                  disabled
+                  className="px-4 py-3 w-full text-gray-600 bg-gray-100 rounded-xl border border-gray-300"
                 />
-                <datalist id="subcategoryList">
-                  {existingSubcategories.map((s) => (
-                    <option key={s} value={s} />
-                  ))}
-                </datalist>
               </div>
 
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Description (optional)
-                </label>
-                <input
-                  type="text"
-                  value={newPhoto.description}
-                  onChange={(e) =>
-                    setNewPhoto((p) => ({ ...p, description: e.target.value }))
-                  }
-                  placeholder="Short description"
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                />
-              </div>
+              {/* Description removed per request */}
 
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -722,7 +665,10 @@ const AdminCategoryPage = () => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handlePhotoFileUpload}
+                  onChange={(e) => {
+                    console.log("File input changed, files:", e.target.files);
+                    handlePhotoFileUpload(e);
+                  }}
                   className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
                   required
                 />
@@ -737,7 +683,14 @@ const AdminCategoryPage = () => {
                     src={photoPreview}
                     alt="Preview"
                     className="object-cover w-full h-48 rounded-xl"
-                    onError={() => setPhotoPreview("")}
+                    onError={(e) => {
+                      console.error("Image failed to load:", photoPreview);
+                      console.error("Image element error:", e);
+                      setPhotoPreview("");
+                    }}
+                    onLoad={() => {
+                      console.log("Image loaded successfully:", photoPreview);
+                    }}
                   />
                 </div>
               )}

@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
+import { jsPDF } from "jspdf";
 import {
   ShoppingCart,
   History,
@@ -572,6 +573,36 @@ const UserDashboard = () => {
   const confirmOrder = () => {
     console.log("Confirming order, cart:", cart);
 
+    // Generate PDF
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.text('AT Jeweller - Order Confirmation', 20, 30);
+    
+    // Order details
+    doc.setFontSize(12);
+    doc.text(`Order Date: ${new Date().toLocaleDateString()}`, 20, 50);
+    doc.text(`Customer: ${user?.name || "Guest User"}`, 20, 60);
+    doc.text(`Order ID: ${Date.now()}`, 20, 70);
+    
+    // Items
+    doc.text('Items:', 20, 90);
+    let yPosition = 100;
+    cart.forEach((item, index) => {
+      doc.text(`${index + 1}. ${item.name} (${item.category})`, 20, yPosition);
+      doc.text(`   Quantity: ${item.quantity}`, 20, yPosition + 10);
+      doc.text(`   Weight: ${item.weight || "N/A"}`, 20, yPosition + 20);
+      yPosition += 30;
+    });
+    
+    // Total
+    doc.text(`Total Items: ${getCartItemCount()}`, 20, yPosition + 10);
+    doc.text(`Total Weight: ${getCartTotalWeight()}g`, 20, yPosition + 20);
+    
+    // Save the PDF
+    doc.save(`order-${Date.now()}.pdf`);
+
     // Store booking data for admin to see (if available)
     if (addBooking) {
       cart.forEach((item) => {
@@ -700,9 +731,9 @@ const UserDashboard = () => {
         newSet.delete(item.id);
         return newSet;
       });
-      
+
       // Remove item from cart
-      setCart(cart.filter(cartItem => cartItem.id !== item.id));
+      setCart(cart.filter((cartItem) => cartItem.id !== item.id));
       setToast({
         message: `Removed ${item.name} from cart!`,
         type: "info",
@@ -772,7 +803,7 @@ const UserDashboard = () => {
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="flex fixed inset-y-0 left-0 z-40 flex-col w-[85vw] max-w-xs sm:max-w-sm bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-32 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <div className="flex fixed top-0 left-0 z-40 flex-col justify-between w-[85vw] max-w-xs sm:max-w-sm bg-white border-r border-gray-200 shadow-xl h-[110vh] lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-32 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
@@ -780,21 +811,12 @@ const UserDashboard = () => {
                 <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
                 <p className="text-sm text-gray-500">Dashboard</p>
               </div>
-              <div className="flex items-center space-x-2 lg:hidden">
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800"
-                  title="Logout"
-                >
-                  Logout
-                </button>
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -903,26 +925,27 @@ const UserDashboard = () => {
 
       {/* Main Content */}
       <div
-        className="flex overflow-hidden flex-col flex-1 lg:ml-72"
+        className="flex flex-col flex-1 lg:ml-72"
         style={{ scrollBehavior: "auto" }}
       >
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 p-4 border-b border-gray-200 shadow-sm backdrop-blur bg-white/90 lg:p-6">
-          <div className="flex gap-2 justify-center items-center lg:justify-between">
-            <div className="flex gap-2 items-center">
+        <header className="fixed top-0 right-0 left-0 z-30 p-4 border-b border-gray-200 shadow-sm backdrop-blur bg-white/90 md:sticky md:top-0 lg:p-6">
+          <div className="flex relative gap-2 justify-center items-center">
+            <div className="absolute left-0">
               {activeTab === "catalog" && selectedCategory !== "All" && (
                 <button
                   onClick={handleBackToCategories}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
+                  className="hidden items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50"
                 >
                   <ChevronLeft className="mr-1 w-4 h-4" />
                   Back to Categories
                 </button>
               )}
-              <div className="text-base font-semibold text-gray-800">
-                AT Jeweller
-              </div>
-              {/* Cart Button in Header */}
+            </div>
+            <div className="text-base font-semibold text-gray-800">
+              AT Jeweller
+            </div>
+            <div className="absolute right-0">
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowCartModal(true)}
@@ -942,14 +965,18 @@ const UserDashboard = () => {
         </header>
 
         {/* Content Area */}
-        <main className="overflow-y-auto overflow-x-hidden flex-1 p-4 sm:p-6 scrollbar-hide">
+        <main
+          className={`flex-1 ${
+            selectedCategory !== "All" ? "pt-24" : "pt-16"
+          } p-4 sm:p-6 scrollbar-hide`}
+        >
           {/* Jewellery Catalog */}
           {activeTab === "catalog" && (
             <div className="space-y-6">
               {/* Categories Gallery (when All is selected) */}
               {selectedCategory === "All" && !searchTerm && (
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="mt-4 text-2xl font-bold text-gray-900">
                     Categories
                   </h2>
                   <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -960,7 +987,7 @@ const UserDashboard = () => {
                           setSelectedCategory(category);
                           setCurrentPage(1);
                         }}
-                        className="overflow-hidden relative rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
+                        className="overflow-hidden relative z-10 rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
                       >
                         <div className="relative">
                           <img
@@ -982,19 +1009,68 @@ const UserDashboard = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const sampleItem = jewellery.find(
-                                    (item) => item.category === category
-                                  );
-                                  if (sampleItem) {
-                                    handleAddToCartClick(sampleItem);
+                                  const hasCategoryItems = Array.from(clickedItems).some(id => id && typeof id === 'string' && id.startsWith(category + '-'));
+                                  if (hasCategoryItems) {
+                                    // Remove all items from this category
+                                    const newCart = cart.filter(cartItem => !cartItem.id.startsWith(category + '-'));
+                                    setCart(newCart);
+                                    setClickedItems(prev => {
+                                      const newSet = new Set(prev);
+                                      Array.from(prev).forEach(id => {
+                                        if (id && typeof id === 'string' && id.startsWith(category + '-')) {
+                                          newSet.delete(id);
+                                        }
+                                      });
+                                      return newSet;
+                                    });
+                                    setToast({
+                                      message: `Removed all ${category} items from cart!`,
+                                      type: "info",
+                                      duration: 3000,
+                                    });
+                                  } else {
+                                    // Add all items from this category
+                                    const allImages = Object.entries(categoryImages[category] || {}).flatMap(([subcategory, images]) =>
+                                      images.map((image, index) => {
+                                        const imageUrl = typeof image === "string" ? image : image.url;
+                                        const imageDesc = typeof image === "string" ? `${category} ${subcategory}` : image.description || `${category} ${subcategory}`;
+                                        const imageWeight = typeof image === "string" ? "" : image.weight || "";
+                                        const itemId = `${category}-${subcategory}-${index}`;
+                                        return {
+                                          id: itemId,
+                                          category: category,
+                                          subcategory: subcategory,
+                                          name: `${category} ${subcategory}`,
+                                          description: imageDesc,
+                                          image: imageUrl,
+                                          weight: imageWeight,
+                                        };
+                                      })
+                                    );
+                                    const newCart = [...cart];
+                                    allImages.forEach(item => {
+                                      const existingIndex = newCart.findIndex(cartItem => cartItem.id === item.id);
+                                      if (existingIndex !== -1) {
+                                        newCart[existingIndex].quantity += 1;
+                                      } else {
+                                        newCart.push({ ...item, quantity: 1 });
+                                      }
+                                      setClickedItems((prev) => new Set(prev).add(item.id));
+                                    });
+                                    setCart(newCart);
+                                    const totalWeight = allImages.reduce((sum, item) => {
+                                      const w = parseFloat(String(item.weight).replace("g", "")) || 0;
+                                      return sum + w;
+                                    }, 0);
+                                    setToast({
+                                      message: `Added ${allImages.length} ${category} items (${totalWeight.toFixed(1)}g total) to cart!`,
+                                      type: "success",
+                                      duration: 3000,
+                                    });
                                   }
                                 }}
                                 className={`p-2 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 ${
-                                  clickedItems.has(
-                                    jewellery.find(
-                                      (item) => item.category === category
-                                    )?.id || ""
-                                  )
+                                  Array.from(clickedItems).some(id => id && typeof id === 'string' && id.startsWith(category + '-'))
                                     ? "bg-gradient-to-r from-green-500 to-green-600"
                                     : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                                 }`}
@@ -1024,7 +1100,11 @@ const UserDashboard = () => {
               {selectedCategory !== "All" && (
                 <div className="space-y-6">
                   {/* Filter and Sort Controls - Fixed for mobile, sticky for desktop */}
-                  <div className="fixed top-0 right-0 left-0 z-50 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-4 md:p-6 md:rounded-2xl md:border-2 md:shadow-xl md:bg-white md:border-amber-200 md:mb-8">
+                  <div
+                    className={`fixed right-0 left-0 top-12 z-40 p-3 border-b border-gray-200 shadow-md backdrop-blur-sm bg-white/95 md:sticky md:top-4 md:p-6 md:rounded-2xl md:border-2 md:shadow-xl md:bg-white md:border-amber-200 md:mb-8 ${
+                      sidebarOpen && isMobile ? "hidden" : ""
+                    }`}
+                  >
                     <div className="flex flex-wrap gap-2 justify-between items-center md:gap-4">
                       <div className="flex flex-wrap gap-2 items-center md:gap-3">
                         <button
@@ -1067,28 +1147,7 @@ const UserDashboard = () => {
                       </div>
 
                       <div className="flex items-center space-x-1 md:space-x-3">
-                        <button
-                          onClick={() => setViewMode("grid")}
-                          className={`p-1.5 md:p-2 rounded-lg transition-colors ${
-                            viewMode === "grid"
-                              ? "bg-amber-100 text-amber-600"
-                              : "text-gray-500 hover:bg-gray-100"
-                          }`}
-                          title="Grid View"
-                        >
-                          <Grid3X3 className="w-4 h-4 md:w-5 md:h-5" />
-                        </button>
-                        <button
-                          onClick={() => setViewMode("list")}
-                          className={`p-1.5 md:p-2 rounded-lg transition-colors ${
-                            viewMode === "list"
-                              ? "bg-amber-100 text-amber-600"
-                              : "text-gray-500 hover:bg-gray-100"
-                          }`}
-                          title="List View"
-                        >
-                          <List className="w-4 h-4 md:w-5 md:h-5" />
-                        </button>
+                        {/* View mode controls removed - only grid view available */}
                       </div>
                     </div>
 
@@ -1133,11 +1192,7 @@ const UserDashboard = () => {
 
                   {/* Items Grid */}
                   <div
-                    className={`grid gap-4 sm:gap-6 transition-all duration-300 ${
-                      viewMode === "grid"
-                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                        : "grid-cols-1"
-                    }`}
+                    className={`grid grid-cols-1 gap-4 transition-all duration-300 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4`}
                   >
                     {Object.entries(
                       categoryImages[selectedCategory] || {}
@@ -1200,17 +1255,9 @@ const UserDashboard = () => {
                           return (
                             <div
                               key={itemId}
-                              className={`overflow-hidden relative rounded-xl border border-gray-200 shadow-md transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 ${
-                                viewMode === "list" ? "flex" : ""
-                              }`}
+                              className="overflow-hidden relative rounded-xl border border-gray-200 shadow-md transition-all duration-300 group hover:shadow-xl hover:-translate-y-1"
                             >
-                              <div
-                                className={`${
-                                  viewMode === "list"
-                                    ? "w-32 h-32"
-                                    : "aspect-square"
-                                } overflow-hidden relative`}
-                              >
+                              <div className="overflow-hidden relative aspect-square">
                                 <img
                                   src={imageUrl}
                                   alt={imageDesc}
@@ -1218,20 +1265,8 @@ const UserDashboard = () => {
                                 />
                               </div>
 
-                              <div
-                                className={`${
-                                  viewMode === "list"
-                                    ? "flex-1 p-4"
-                                    : "absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10"
-                                }`}
-                              >
-                                <div
-                                  className={`${
-                                    viewMode === "list"
-                                      ? "flex justify-between items-start"
-                                      : "absolute right-0 bottom-0 left-0 p-4"
-                                  }`}
-                                >
+                              <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10">
+                                <div className="absolute right-0 bottom-0 left-0 p-4">
                                   <div>{/* Subcategory name removed */}</div>
                                   <div className="flex justify-end">
                                     <button
@@ -1247,28 +1282,13 @@ const UserDashboard = () => {
                                         };
                                         handleAddToCartClick(item);
                                       }}
-                                      className={`${
-                                        viewMode === "list"
-                                          ? "px-4 py-2 font-medium rounded-lg"
-                                          : "p-2 rounded-full border shadow-lg"
-                                      } opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl ${
-                                        viewMode === "list"
-                                          ? ""
-                                          : "border-white/20"
-                                      } ${
+                                      className={`p-2 text-white rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 ${
                                         clickedItems.has(itemId)
-                                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
-                                          : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                                          ? "bg-gradient-to-r from-green-500 to-green-600"
+                                          : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                                       }`}
                                     >
-                                      <ShoppingCart
-                                        className={`${
-                                          viewMode === "list"
-                                            ? "inline mr-2"
-                                            : ""
-                                        } w-5 h-5`}
-                                      />
-                                      {viewMode === "list" && "Add to Cart"}
+                                      <ShoppingCart className="w-5 h-5" />
                                     </button>
                                   </div>
                                 </div>
@@ -1298,26 +1318,14 @@ const UserDashboard = () => {
                 (paginatedItems.length > 0 ? (
                   <>
                     <div
-                      className={`grid gap-8 sm:gap-10 transition-all duration-300 ease-in-out animate-fade-in ${
-                        viewMode === "grid"
-                          ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
-                          : "grid-cols-1"
-                      }`}
+                      className={`grid grid-cols-1 gap-8 transition-all duration-300 ease-in-out sm:gap-10 animate-fade-in sm:grid-cols-2 lg:grid-cols-2`}
                     >
                       {paginatedItems.map((item) => (
                         <div
                           key={item.id}
-                          className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-amber-200 transition-all duration-300 overflow-hidden hover-lift relative ${
-                            viewMode === "list" ? "flex" : ""
-                          }`}
+                          className="overflow-hidden relative bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-amber-200 hover-lift"
                         >
-                          <div
-                            className={`${
-                              viewMode === "list"
-                                ? "w-32 h-32"
-                                : "aspect-square"
-                            } overflow-hidden`}
-                          >
+                          <div className="overflow-hidden aspect-square">
                             <img
                               src={item.image}
                               alt={item.name}
@@ -1535,16 +1543,29 @@ const UserDashboard = () => {
                       <div className="pt-4 mt-4 border-t border-gray-200">
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center space-x-2">
-                            <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            <svg
+                              className="w-4 h-4 text-amber-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                              />
                             </svg>
                             <span className="text-xs text-gray-500">
-                              Total Weight: {(() => {
+                              Total Weight:{" "}
+                              {(() => {
                                 const w = booking.weight;
                                 if (!w) return "N/A";
                                 const ws = String(w).trim();
-                                const weightNum = parseFloat(ws.replace("g", "")) || 0;
-                                const totalWeight = weightNum * booking.quantity;
+                                const weightNum =
+                                  parseFloat(ws.replace("g", "")) || 0;
+                                const totalWeight =
+                                  weightNum * booking.quantity;
                                 return `${totalWeight.toFixed(1)}g`;
                               })()}
                             </span>

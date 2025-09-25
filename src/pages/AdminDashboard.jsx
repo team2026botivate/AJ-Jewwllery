@@ -566,7 +566,7 @@ const AdminDashboard = () => {
 
         {/* Sidebar */}
         {sidebarOpen && (
-          <div className="flex overflow-y-auto overflow-x-hidden fixed inset-y-0 left-0 z-50 flex-col pb-32 w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide">
+          <div className="flex overflow-y-auto overflow-x-hidden fixed left-0 top-0 z-50 flex-col h-screen pb-12 w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">

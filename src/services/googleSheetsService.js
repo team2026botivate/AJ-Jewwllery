@@ -16,6 +16,74 @@ export const fetchSheetData = async () => {
   }
 };
 
+// Function to compress image before upload
+const compressImage = (
+  file,
+  maxWidth = 800,
+  maxHeight = 800,
+  quality = 0.7
+) => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+      console.log("Original image dimensions:", img.width, "x", img.height);
+      console.log("Original image size:", file.size, "bytes");
+
+      // Calculate new dimensions
+      let { width, height } = img;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+      }
+
+      console.log("Compressed dimensions:", width, "x", height);
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            console.log("Compressed blob size:", blob.size, "bytes");
+            console.log(
+              "Compression ratio:",
+              (((file.size - blob.size) / file.size) * 100).toFixed(1) +
+                "% reduction"
+            );
+            resolve(blob);
+          } else {
+            console.error("Compression failed - blob is null");
+            reject(new Error("Compression failed"));
+          }
+        },
+        file.type || "image/jpeg",
+        quality
+      );
+    };
+
+    img.onerror = (error) => {
+      console.error("Image loading failed:", error);
+      reject(error);
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 export const addCategory = async (categoryData) => {
   try {
     console.group("[FRONTEND] Category Submission Debug");
@@ -34,13 +102,21 @@ export const addCategory = async (categoryData) => {
       if (categoryData.image instanceof File) {
         imageName = categoryData.image.name || imageName;
         imageMime = categoryData.image.type || imageMime;
+
+        // Compress the image first
+        console.log("Compressing image...");
+        const compressedBlob = await compressImage(categoryData.image);
+        console.log("Original size:", categoryData.image.size, "bytes");
+        console.log("Compressed size:", compressedBlob.size, "bytes");
+
+        // Convert compressed blob to base64
         base64Data = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(categoryData.image);
+          reader.readAsDataURL(compressedBlob);
         });
         console.log(
-          "Converted File to base64 (length:",
+          "Converted compressed File to base64 (length:",
           base64Data.length,
           ")"
         );
