@@ -12,10 +12,14 @@ import {
   BookOpen,
   LogOut,
   Search,
+  Filter,
   Edit3,
   Eye,
+  Grid3X3,
+  List,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Star,
   Gem,
   Crown,
@@ -27,6 +31,7 @@ import {
   Shirt,
   Menu,
   ArrowUp,
+  ShoppingCart,
 } from "lucide-react";
 import Footer from "../components/Footer";
 import Subcategories from "../components/Subcategories";
@@ -113,86 +118,9 @@ const AdminDashboard = () => {
     image: "",
   });
 
-  // LocalStorage keys for dashboard persistence
-  const DASH_CATEGORY_IMAGES_KEY = "adminDash.categoryImages";
-  const DASH_UNIQUE_CATEGORIES_KEY = "adminDash.uniqueCategories";
-
-  // Apply categories & images from Google Sheet response into local state
-  const applyCategoriesFromSheet = (data) => {
-    try {
-      // Normalize to an array of row objects
-      const rows = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.rows)
-        ? data.rows
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
-
-      if (!Array.isArray(rows) || rows.length === 0) return;
-
-      // Extract fields defensively from various possible shapes
-      const extracted = rows
-        .map((r) => {
-          const name =
-            r?.category ||
-            r?.name ||
-            r?.Category ||
-            (Array.isArray(r) ? r[0] : undefined);
-          const image =
-            r?.image ||
-            r?.Image ||
-            r?.imageUrl ||
-            r?.url ||
-            (Array.isArray(r) ? r[2] : undefined);
-          const description =
-            r?.description || r?.desc || (Array.isArray(r) ? r[1] : "");
-          return { name, image, description };
-        })
-        .filter((x) => x.name);
-
-      if (extracted.length === 0) return;
-
-      // Update categories
-      setUniqueCategories((prev) => {
-        const set = new Set(prev);
-        extracted.forEach(({ name }) => {
-          if (name) set.add(String(name));
-        });
-        return Array.from(set);
-      });
-
-      // Update category images
-      setCategoryImages((prev) => {
-        const updated = { ...prev };
-        extracted.forEach(({ name, image, description }) => {
-          if (!name || !image) return;
-          const url = asset(image);
-          const entry = { url, description: description || "", weight: "" };
-          const category = updated[name] || {};
-          const def = Array.isArray(category.Default) ? category.Default : [];
-          const exists = def.some(
-            (i) => (typeof i === "string" ? i : i.url) === url
-          );
-          if (!exists) {
-            updated[name] = { ...category, Default: [...def, entry] };
-          } else {
-            updated[name] = { ...category, Default: def };
-          }
-        });
-        return updated;
-      });
-    } catch (err) {
-      console.error("Failed to apply categories from sheet", err);
-    }
-  };
-
-  // Resolve public assets with Vite base (safe join) and keep http/data URLs intact
+  // Resolve public assets with Vite base (safe join)
   const asset = (name) => {
     if (!name) return name;
-    if (typeof name !== "string") return name;
-    if (name.startsWith("data:")) return name;
-    if (name.startsWith("http://") || name.startsWith("https://")) return name;
     const base = import.meta.env.BASE_URL || "/";
     const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
     const clean = name.startsWith("/") ? name.slice(1) : name;
@@ -383,54 +311,9 @@ const AdminDashboard = () => {
     image: "",
   });
   const [categoryImagePreview, setCategoryImagePreview] = useState("");
-  // LocalStorage key for persisting category image draft
-  const CATEGORY_IMAGE_DRAFT_KEY = "admin.category.imageDraft";
-
-  // Rehydrate any draft category image on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(CATEGORY_IMAGE_DRAFT_KEY);
-      if (saved) {
-        setNewCategory((prev) => ({ ...prev, image: saved }));
-        setCategoryImagePreview(saved);
-      }
-    } catch (err) {
-      console.error("Failed to read draft image from localStorage", err);
-    }
-  }, []);
 
   // Categories from context to keep Admin and Catalogue in sync
   const [uniqueCategories, setUniqueCategories] = useState(getCategories());
-
-  // Rehydrate persisted dashboard state on mount (after state declarations)
-  useEffect(() => {
-    try {
-      const savedCats = localStorage.getItem(DASH_UNIQUE_CATEGORIES_KEY);
-      if (savedCats) {
-        const parsed = JSON.parse(savedCats);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setUniqueCategories((prev) => {
-            const set = new Set(parsed.concat(prev));
-            return Array.from(set);
-          });
-        }
-      }
-    } catch (e) {
-      console.error("Failed to rehydrate uniqueCategories", e);
-    }
-
-    try {
-      const savedImages = localStorage.getItem(DASH_CATEGORY_IMAGES_KEY);
-      if (savedImages) {
-        const parsed = JSON.parse(savedImages);
-        if (parsed && typeof parsed === "object") {
-          setCategoryImages((prev) => ({ ...prev, ...parsed }));
-        }
-      }
-    } catch (e) {
-      console.error("Failed to rehydrate categoryImages", e);
-    }
-  }, []);
 
   // Category stats for unique categories
   const categoryStats = useMemo(() => {
@@ -440,29 +323,6 @@ const AdminDashboard = () => {
     });
     return stats;
   }, [jewellery, uniqueCategories]);
-
-  // Persist dashboard state when it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        DASH_UNIQUE_CATEGORIES_KEY,
-        JSON.stringify(uniqueCategories)
-      );
-    } catch (e) {
-      console.error("Failed to persist uniqueCategories", e);
-    }
-  }, [uniqueCategories]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        DASH_CATEGORY_IMAGES_KEY,
-        JSON.stringify(categoryImages)
-      );
-    } catch (e) {
-      console.error("Failed to persist categoryImages", e);
-    }
-  }, [categoryImages]);
 
   // Filtered and searched jewellery
   const filteredJewellery = useMemo(() => {
@@ -492,6 +352,11 @@ const AdminDashboard = () => {
 
   const totalPages = Math.ceil(filteredJewellery.length / itemsPerPage);
 
+  const addToCart = (item, quantity) => {
+    // For admin dashboard, we could add items to a temporary cart for testing purposes
+    alert(`Added ${item.name} to cart (Admin Mode)`);
+  };
+
   useEffect(() => {
     if (newJewellery.image) {
       setImagePreview(newJewellery.image);
@@ -511,7 +376,6 @@ const AdminDashboard = () => {
       try {
         const data = await fetchSheetData();
         setSheetData(data);
-        applyCategoriesFromSheet(data);
       } catch (err) {
         console.error("Failed to load sheet data:", err);
         setError("Failed to load data from Google Sheets");
@@ -623,12 +487,6 @@ const AdminDashboard = () => {
         const imageUrl = e.target.result;
         setNewCategory({ ...newCategory, image: imageUrl });
         setCategoryImagePreview(imageUrl);
-        // Persist the uploaded image so it survives refresh
-        try {
-          localStorage.setItem(CATEGORY_IMAGE_DRAFT_KEY, imageUrl);
-        } catch (err) {
-          console.error("Failed to save draft image to localStorage", err);
-        }
       };
       reader.readAsDataURL(file);
     }
@@ -664,47 +522,20 @@ const AdminDashboard = () => {
       });
 
       // Update local state if API call is successful
-      // Compute next states so we can persist immediately
-      const nextUnique = Array.from(
-        new Set([...uniqueCategories, newCategory.name])
-      );
-      const nextImages = {
+      setUniqueCategories((prev) => [...prev, newCategory.name]);
+      setCategoryImages({
         ...categoryImages,
         [newCategory.name]: {
           Default: [newCategory.image],
         },
-      };
-
-      setUniqueCategories(nextUnique);
-      setCategoryImages(nextImages);
-
-      // Persist immediately to localStorage to survive refresh
-      try {
-        localStorage.setItem(
-          DASH_UNIQUE_CATEGORIES_KEY,
-          JSON.stringify(nextUnique)
-        );
-        localStorage.setItem(
-          DASH_CATEGORY_IMAGES_KEY,
-          JSON.stringify(nextImages)
-        );
-      } catch (e) {
-        console.error("Failed to persist new category to localStorage", e);
-      }
+      });
 
       alert(`"${newCategory.name}" category added successfully!`);
-      // Clear draft image from localStorage upon success
-      try {
-        localStorage.removeItem(CATEGORY_IMAGE_DRAFT_KEY);
-      } catch (err) {
-        console.error("Failed to clear draft image from localStorage", err);
-      }
       resetCategoryForm();
 
       // Refresh the sheet data to get the latest changes
       const updatedData = await fetchSheetData();
       setSheetData(updatedData);
-      applyCategoriesFromSheet(updatedData);
     } catch (error) {
       console.error("Error adding category:", error);
       setError(`Failed to add category: ${error.message}`);
@@ -720,22 +551,16 @@ const AdminDashboard = () => {
     setShowAddCategoryModal(false);
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach((input) => (input.value = ""));
-    // Also clear any persisted draft
-    try {
-      localStorage.removeItem(CATEGORY_IMAGE_DRAFT_KEY);
-    } catch (err) {
-      console.error("Failed to clear draft image from localStorage", err);
-    }
   };
 
   return (
-    <div className="flex overflow-x-hidden flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex overflow-x-hidden flex-col pb-20 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex flex-1">
         {/* Mobile Menu Button */}
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
+            className="fixed top-0 left-1 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -744,14 +569,19 @@ const AdminDashboard = () => {
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+            className="fixed inset-0 z-[60] bg-black bg-opacity-50 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
         {sidebarOpen && (
-          <div className="flex overflow-y-auto overflow-x-hidden fixed top-0 left-0 z-50 flex-col pb-12 w-80 h-screen bg-white border-r border-gray-200 shadow-xl lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide">
+          <div
+            className="flex overflow-y-auto overflow-x-hidden fixed inset-y-0 left-0 z-[70] flex-col pb-32 w-80 bg-white border-r border-gray-200 shadow-xl lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:z-40 lg:shadow-none lg:w-72 lg:translate-x-0 lg:flex-shrink-0 scrollbar-hide"
+            style={{
+              paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)",
+            }}
+          >
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
@@ -810,7 +640,7 @@ const AdminDashboard = () => {
             </nav>
 
             {/* Logout */}
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 pb-6 md:pb-4 border-t border-gray-200">
               <button
                 onClick={handleLogout}
                 className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
@@ -828,81 +658,210 @@ const AdminDashboard = () => {
           className="flex overflow-hidden overflow-x-hidden flex-col flex-1 min-w-0 lg:ml-72"
           style={{ scrollBehavior: "auto" }}
         >
+          {/* Top Bar */}
+          <header className="p-4 bg-white border-b border-gray-200 shadow-sm lg:p-6">
+            <div className="flex flex-col justify-between items-start space-y-4 lg:flex-row lg:items-center lg:space-y-0">
+              <div className="flex-1 max-w-lg"></div>
+
+              {activeTab === "jewellery" && (
+                <div className="flex items-center space-x-4">
+                  {/* Category Filter */}
+                  <div className="flex items-center space-x-2">
+                    <Filter className="w-5 h-5 text-gray-600" />
+                    {/* Mobile Category Dropdown */}
+                    <div className="relative w-full lg:hidden">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => {
+                          setSelectedCategory(e.target.value);
+                          if (
+                            (selectedCategory !== "All" &&
+                              e.target.value === "All") ||
+                            (selectedCategory === "All" &&
+                              e.target.value !== "All")
+                          ) {
+                            setCurrentPage(1);
+                          }
+                        }}
+                        className="px-4 py-2 w-full bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500"
+                      >
+                        {uniqueCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat} ({categoryStats[cat] || 0})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 transform -translate-y-1/2 pointer-events-none" />
+                    </div>
+                    {/* Desktop Category Pills */}
+                    <div className="hidden overflow-x-auto p-1 max-w-2xl bg-gray-100 rounded-lg lg:flex scrollbar-hide">
+                      {uniqueCategories.map((cat) => {
+                        // Define icons for each category
+                        const getCategoryIcon = (category) => {
+                          switch (category) {
+                            case "All":
+                              return Package;
+                            case "Animals":
+                              return Heart;
+                            case "Arabic Style 21k":
+                              return Crown;
+                            case "Bracelets":
+                              return Circle;
+                            case "Mine":
+                              return Gem;
+                            case "SET":
+                              return Sparkles;
+                            case "Pendant":
+                              return Heart;
+                            case "Man Collection":
+                              return Shirt;
+                            case "Rings":
+                              return Circle;
+                            case "Earrings":
+                              return Sparkles;
+                            default:
+                              return Package;
+                          }
+                        };
+                        const IconComponent = getCategoryIcon(cat);
+
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => {
+                              setSelectedCategory(cat);
+                              // Only reset to page 1 if switching from a filtered category to "All" or vice versa
+                              if (
+                                (selectedCategory !== "All" && cat === "All") ||
+                                (selectedCategory === "All" && cat !== "All")
+                              ) {
+                                setCurrentPage(1);
+                              }
+                            }}
+                            className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
+                              selectedCategory === cat
+                                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md transform scale-105"
+                                : "text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm"
+                            }`}
+                          >
+                            <IconComponent className="flex-shrink-0 w-4 h-4" />
+                            <span>{cat}</span>
+                            <span className="text-xs opacity-75">
+                              ({categoryStats[cat] || 0})
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex p-1 bg-gray-100 rounded-lg">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 rounded ${
+                        viewMode === "grid" ? "bg-white shadow-sm" : ""
+                      }`}
+                    >
+                      <Grid3X3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 rounded ${
+                        viewMode === "list" ? "bg-white shadow-sm" : ""
+                      }`}
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center px-6 py-2 space-x-2 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>Add Jewellery</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </header>
+
           {/* Content Area */}
-          <main className="flex-1 p-4 pt-20 pb-28 min-h-screen sm:p-6 lg:pb-6 lg:pt-6">
+          <main className="flex-1 p-4 pb-28 sm:p-6 lg:pb-6">
             {/* Categories Tab */}
             {activeTab === "categories" && (
               <div className="space-y-6">
-                <div className="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold text-gray-900">
                     Categories
                   </h2>
                   <button
                     onClick={() => setShowAddCategoryModal(true)}
-                    className="px-4 py-2 w-full text-white bg-blue-500 rounded-lg transition-colors sm:w-auto hover:bg-blue-600"
+                    className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
                   >
                     Add Category
                   </button>
                 </div>
 
                 {!selectedCategory || selectedCategory === "All" ? (
-                  uniqueCategories.length > 1 ? (
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {uniqueCategories.slice(1).map((category) => (
-                        <div
-                          key={category}
-                          onClick={() => {
-                            navigate(`/category/${category}`);
-                          }}
-                          className="overflow-hidden relative rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
-                        >
-                          <div className="relative">
-                            <img
-                              src={getCategoryCover(category)}
-                              alt={category}
-                              className="object-cover w-full h-48 transition-transform duration-500 sm:h-52 md:h-56 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10" />
-                            <div className="absolute right-0 bottom-0 left-0 p-3 sm:p-4">
-                              <div className="flex justify-between items-end">
-                                <div>
-                                  <h3 className="text-base font-bold text-white sm:text-lg">
-                                    {category}
-                                  </h3>
-                                  <p className="text-xs sm:text-sm text-white/80">
-                                    Tap to view collection
-                                  </p>
-                                </div>
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {uniqueCategories.slice(1).map((category) => (
+                      <div
+                        key={category}
+                        onClick={() => {
+                          navigate(`/category/${category}`);
+                        }}
+                        className="overflow-hidden relative rounded-2xl border border-gray-200 shadow-md transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1"
+                      >
+                        <div className="relative">
+                          <img
+                            src={getCategoryCover(category)}
+                            alt={category}
+                            className="object-cover w-full h-56 transition-transform duration-500 sm:h-52 md:h-60 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/60 via-black/10" />
+                          <div className="absolute right-0 bottom-0 left-0 p-4">
+                            <div className="flex justify-between items-end">
+                              <div>
+                                <h3 className="text-lg font-bold text-white">
+                                  {category}
+                                </h3>
+                                <p className="text-xs text-white/80">
+                                  Tap to view collection
+                                </p>
                               </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Add a sample item from this category to cart
+                                  const sampleItem = jewellery.find(
+                                    (item) => item.category === category
+                                  );
+                                  if (sampleItem) {
+                                    addToCart(sampleItem, 1);
+                                  } else {
+                                    alert(
+                                      `No items available in ${category} category`
+                                    );
+                                  }
+                                }}
+                                className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20"
+                              >
+                                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
+                              </button>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-16 text-center bg-white rounded-2xl border border-gray-200">
-                      <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
-                      <h3 className="mb-2 text-xl font-medium text-gray-900">
-                        No categories yet
-                      </h3>
-                      <p className="mb-6 text-gray-600">
-                        Create your first category to organize your jewellery
-                        collection
-                      </p>
-                      <button
-                        onClick={() => setShowAddCategoryModal(true)}
-                        className="px-6 py-3 text-white bg-blue-500 rounded-xl shadow-lg transition-colors hover:bg-blue-600"
-                      >
-                        Create First Category
-                      </button>
-                    </div>
-                  )
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <Subcategories
                     selectedCategory={selectedCategory}
                     categoryImages={categoryImages}
                     setCategoryImages={setCategoryImages}
                     setSelectedCategory={setSelectedCategory}
+                    addToCart={addToCart}
                   />
                 )}
               </div>
@@ -1581,7 +1540,7 @@ const AdminDashboard = () => {
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className="fixed right-6 bottom-24 z-40 p-3 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
+          className="fixed right-6 bottom-24 z-40 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
           title="Back to Top"
         >
           <ArrowUp className="w-5 h-5" />

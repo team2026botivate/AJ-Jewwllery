@@ -791,81 +791,82 @@ const UserDashboard = () => {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-[60] bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`flex fixed top-0 left-0 z-40 flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } sm:translate-x-0`}>
-          {/* Sidebar Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
-                <p className="text-sm text-gray-500">Dashboard</p>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
+      <div
+        className={`flex fixed top-0 left-0 z-[70] flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
+      >
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">AT Jeweller</h1>
+              <p className="text-sm text-gray-500">Dashboard</p>
             </div>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
           </div>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            {[
-              { id: "catalog", label: "Catalogue", icon: Package },
-              { id: "bookings", label: "Orders", icon: History },
-            ].map((tab) => (
-              <div key={tab.id} className="relative">
-                {/* Active indicator bar */}
-                {activeTab === tab.id && (
-                  <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500 rounded-r-full"></div>
-                )}
-                <button
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (tab.id === "catalog") {
-                      setSelectedCategory("All");
-                      setSearchTerm("");
-                      setCurrentPage(1);
-                    }
-                    if (isMobile) setSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl font-medium transition-colors overflow-hidden min-w-0
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-2">
+          {[
+            { id: "catalog", label: "Catalogue", icon: Package },
+            { id: "bookings", label: "Orders", icon: History },
+          ].map((tab) => (
+            <div key={tab.id} className="relative">
+              {/* Active indicator bar */}
+              {activeTab === tab.id && (
+                <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500 rounded-r-full"></div>
+              )}
+              <button
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === "catalog") {
+                    setSelectedCategory("All");
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }
+                  if (isMobile) setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl font-medium transition-colors overflow-hidden min-w-0
                     ${
                       activeTab === tab.id
                         ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
-                  title={tab.label}
-                >
-                  <tab.icon className="flex-shrink-0 w-5 h-5" />
-                  <span className="truncate whitespace-nowrap">
-                    {tab.label}
-                  </span>
-                </button>
-              </div>
-            ))}
-          </nav>
+                title={tab.label}
+              >
+                <tab.icon className="flex-shrink-0 w-5 h-5" />
+                <span className="truncate whitespace-nowrap">{tab.label}</span>
+              </button>
+            </div>
+          ))}
+        </nav>
 
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
+        {/* Logout */}
+        <div className="p-4 pb-6 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
         </div>
+      </div>
 
       {/* Sidebar Toggle Button (when sidebar is hidden) */}
       {!sidebarOpen && (
@@ -2254,7 +2255,7 @@ const UserDashboard = () => {
       )}
 
       {/* Back to Top Button */}
-      {showBackToTop && (
+      {showBackToTop && !sidebarOpen && (
         <button
           onClick={scrollToTop}
           className="fixed right-6 bottom-24 z-40 p-3 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
