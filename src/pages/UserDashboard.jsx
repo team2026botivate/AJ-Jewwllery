@@ -58,88 +58,12 @@ const UserDashboard = () => {
     addBooking,
   } = useJewellery();
 
-  const userBookings = [
-    {
-      id: 1,
-      category: "Animals",
-      jewelleryName: "Lion Pendant",
-      quantity: 1,
-      bookingDate: "2024-01-15",
-      status: "Confirmed",
-    },
-    {
-      id: 2,
-      category: "Rings",
-      jewelleryName: "Diamond Ring",
-      quantity: 1,
-      bookingDate: "2024-01-16",
-      status: "Processing",
-    },
-  ];
+  const userBookings = [];
 
   // Mock data for admin bookings and users
-  const adminBookings = [
-    {
-      id: 1,
-      userName: "John Doe",
-      category: "Animals",
-      jewelleryName: "Lion Pendant",
-      quantity: 1,
-      bookingDate: "2024-01-15",
-    },
-    {
-      id: 2,
-      userName: "Jane Smith",
-      category: "Rings",
-      jewelleryName: "Diamond Ring",
-      quantity: 1,
-      bookingDate: "2024-01-16",
-    },
-    {
-      id: 3,
-      userName: "Mike Johnson",
-      category: "Earrings",
-      jewelleryName: "Gold Hoops",
-      quantity: 2,
-      bookingDate: "2024-01-17",
-    },
-    {
-      id: 4,
-      userName: "Sarah Wilson",
-      category: "Bracelets",
-      jewelleryName: "Silver Bangle Set",
-      quantity: 1,
-      bookingDate: "2024-01-18",
-    },
-  ];
+  const adminBookings = [];
 
-  const users = [
-    { id: "user1", name: "John Doe", password: "pass123", status: "active" },
-    {
-      id: "user2",
-      name: "Jane Smith",
-      password: "pass456",
-      status: "inactive",
-    },
-    {
-      id: "user3",
-      name: "Mike Johnson",
-      password: "pass789",
-      status: "active",
-    },
-    {
-      id: "user4",
-      name: "Sarah Wilson",
-      password: "pass101",
-      status: "active",
-    },
-    {
-      id: "user5",
-      name: "David Brown",
-      password: "pass202",
-      status: "inactive",
-    },
-  ];
+  const users = [];
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);

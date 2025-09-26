@@ -280,7 +280,10 @@ const AdminCategoryPage = () => {
         return merged;
       });
     } catch (err) {
-      console.error("Failed to rehydrate category images from localStorage", err);
+      console.error(
+        "Failed to rehydrate category images from localStorage",
+        err
+      );
     }
   }, []);
 
@@ -632,10 +635,26 @@ const AdminCategoryPage = () => {
                           <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2 sm:bottom-4">
                             <div className="px-3 py-1 rounded-full backdrop-blur-sm bg-black/60 sm:bg-black/50">
                               <span className="text-xs font-semibold text-white sm:text-sm">
-                                {parseFloat(
-                                  String(gi.weight).replace("g", "")
-                                ).toFixed(2)}{" "}
-                                g
+                                {(() => {
+                                  const weightStr = String(gi.weight);
+
+                                  // Remove any existing 'g' characters and extra spaces
+                                  const cleanWeight = weightStr
+                                    .replace(/g+/g, '') // Remove all 'g' characters
+                                    .replace(/\s+/g, '') // Remove all whitespace
+                                    .trim();
+
+                                  // Parse the numeric value
+                                  const numWeight = parseFloat(cleanWeight);
+
+                                  // If it's a valid number, format it properly
+                                  if (!isNaN(numWeight) && numWeight > 0) {
+                                    return `${numWeight}g`;
+                                  }
+
+                                  // If it's not a valid number, return as-is or default to 0g
+                                  return weightStr.includes('g') ? weightStr : `${weightStr}g`;
+                                })()}
                               </span>
                             </div>
                           </div>

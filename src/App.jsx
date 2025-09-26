@@ -1,12 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { CatalogueProvider } from "./context/CatalogueContext";
 import { JewelleryProvider } from "./context/JewelleryContext";
 import Login from "./components/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
-import ItemDetail from "./pages/ItemDetail";
-import CategoryPage from "./pages/CategoryPage";
 import AdminCategoryPage from "./pages/AdminCategoryPage";
 import { useAuth } from "./context/AuthContext";
 
@@ -31,8 +28,7 @@ function AppContent() {
         path="/"
         element={user.role === "admin" ? <AdminDashboard /> : <UserDashboard />}
       />
-      <Route path="/item/:id" element={<ItemDetail />} />
-      <Route path="/category/:categoryName" element={user.role === "admin" ? <AdminCategoryPage /> : <CategoryPage />} />
+      <Route path="/category/:categoryName" element={<AdminCategoryPage />} />
     </Routes>
   );
 }
@@ -40,13 +36,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <CatalogueProvider>
-        <JewelleryProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </JewelleryProvider>
-      </CatalogueProvider>
+      <JewelleryProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </JewelleryProvider>
     </AuthProvider>
   );
 }

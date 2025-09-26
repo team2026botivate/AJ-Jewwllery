@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const JewelleryContext = createContext();
 
 export const useJewellery = () => {
   const context = useContext(JewelleryContext);
   if (!context) {
-    throw new Error('useJewellery must be used within a JewelleryProvider');
+    throw new Error("useJewellery must be used within a JewelleryProvider");
   }
   return context;
 };
@@ -14,13 +14,14 @@ export const JewelleryProvider = ({ children }) => {
   // Resolve public assets with Vite base; keep data URLs intact
   const asset = (path) => {
     if (!path) return path;
-    if (typeof path !== 'string') return path;
-    if (path.startsWith('data:')) return path;
-    const base = (import.meta.env.BASE_URL || '/');
-    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    if (typeof path !== "string") return path;
+    if (path.startsWith("data:")) return path;
+    const base = import.meta.env.BASE_URL || "/";
+    const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
     return `${cleanBase}/${cleanPath}`;
   };
+
   // Initial mock data - this will be replaced by your backend API later
   const initialJewellery = [
     {
@@ -377,41 +378,186 @@ export const JewelleryProvider = ({ children }) => {
 
   const [jewellery, setJewellery] = useState(() => {
     // Try to load from localStorage first, fallback to initial data
-    const saved = localStorage.getItem('jewellery-data');
+    const saved = localStorage.getItem("jewellery-data");
     const base = saved ? JSON.parse(saved) : initialJewellery;
     // Normalize image paths for deploy base
     return base.map((item) => ({ ...item, image: asset(item.image) }));
   });
 
-  const [bookings, setBookings] = useState(() => {
+  // CENTRALIZED BOOKINGS SYSTEM - All user bookings stored here
+  const [allBookings, setAllBookings] = useState(() => {
     // Try to load from localStorage first, fallback to empty array
-    const saved = localStorage.getItem('bookings-data');
+    const saved = localStorage.getItem("all-bookings-data");
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Save bookings to localStorage whenever they change
+  // Save all bookings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('bookings-data', JSON.stringify(bookings));
-  }, [bookings]);
+    localStorage.setItem("all-bookings-data", JSON.stringify(allBookings));
+  }, [allBookings]);
 
   // Persist jewellery to localStorage so added data survives reloads
   useEffect(() => {
     try {
-      localStorage.setItem('jewellery-data', JSON.stringify(jewellery));
+      localStorage.setItem("jewellery-data", JSON.stringify(jewellery));
     } catch (err) {
-      console.error('Failed to persist jewellery-data to localStorage', err);
+      console.error("Failed to persist jewellery-data to localStorage", err);
     }
   }, [jewellery]);
 
-  // Add new booking
-  const addBooking = (bookingData) => {
-    const booking = {
-      ...bookingData,
-      id: Date.now(), // Simple ID generation
-      bookingDate: new Date().toISOString(),
-      status: 'Confirmed'
+  // Add new booking with comprehensive data capture
+  const addBooking = (bookingData, currentUser = null) => {
+    // Handle multiple items in a single booking
+    const items = bookingData.items || [bookingData];
+    const itemsArray = Array.isArray(items) ? items : [items];
+
+    // Generate unique base timestamp for this booking batch
+    const baseTimestamp = Date.now();
+
+    // Create booking entries for each item
+    const newBookings = itemsArray.map((item, index) => {
+      const booking = {
+        ...bookingData,
+        ...item,
+        id: `booking-${baseTimestamp}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}-${index}`, // Unique ID for each item
+        bookingDate: new Date().toISOString(),
+        status: "Confirmed",
+        // User information - prioritize passed user data
+        userId:
+          currentUser?.id ||
+          bookingData.userId ||
+          item.userId ||
+          `guest-${Date.now()}`,
+        userName:
+          currentUser?.name ||
+          bookingData.userName ||
+          item.userName ||
+          "Anonymous",
+        userEmail:
+          currentUser?.email || bookingData.userEmail || item.userEmail || "",
+        userPhone:
+          currentUser?.phone || bookingData.userPhone || item.userPhone || "",
+        // Ensure all required fields are captured
+        category: item.category || bookingData.category || "N/A",
+        jewelleryName: item.jewelleryName || item.name || "N/A",
+        items: item.items || item.quantity || 1,
+        grams: parseFloat(item.grams) || parseFloat(item.weight) || 0,
+        price: item.price || bookingData.price || 0,
+        description: item.description || bookingData.description || "",
+        // Store additional booking details
+        bookingDetails: {
+          totalItems: item.items || item.quantity || 1,
+          totalGrams: parseFloat(item.grams) || parseFloat(item.weight) || 0,
+          unitPrice: item.price || bookingData.price || 0,
+          totalPrice:
+            (item.items || item.quantity || 1) *
+            (item.price || bookingData.price || 0),
+          orderType: bookingData.orderType || "Standard",
+          notes: bookingData.notes || "",
+          // Track if this is part of a multi-item booking
+          isMultiItem: itemsArray.length > 1,
+          totalItemsInBooking: itemsArray.length,
+          itemIndex: index + 1,
+        },
+      };
+      return booking;
+    });
+
+    // Add to central bookings store
+    setAllBookings((prev) => [...prev, ...newBookings]);
+    return newBookings.length;
+  };
+
+  // Get bookings for a specific user (for user dashboard)
+  const getUserBookings = (userId) => {
+    if (!userId) return [];
+    return allBookings.filter((booking) => booking.userId === userId);
+  };
+
+  // Get all bookings (for admin dashboard)
+  const getAllBookings = () => {
+    return allBookings;
+  };
+
+  // Get bookings by status
+  const getBookingsByStatus = (status) => {
+    return allBookings.filter((booking) => booking.status === status);
+  };
+
+  // Get bookings by date range
+  const getBookingsByDateRange = (startDate, endDate) => {
+    return allBookings.filter((booking) => {
+      const bookingDate = new Date(booking.bookingDate);
+      return bookingDate >= startDate && bookingDate <= endDate;
+    });
+  };
+
+  // Update booking status (for admin)
+  const updateBookingStatus = (bookingId, newStatus, notes = "") => {
+    setAllBookings((prev) =>
+      prev.map((booking) =>
+        booking.id === bookingId
+          ? {
+              ...booking,
+              status: newStatus,
+              statusUpdatedAt: new Date().toISOString(),
+              adminNotes: notes,
+            }
+          : booking
+      )
+    );
+  };
+
+  // Clear all bookings (for admin)
+  const clearAllBookings = () => {
+    setAllBookings([]);
+    localStorage.removeItem("all-bookings-data");
+    return true;
+  };
+
+  // Delete booking (for admin)
+  const deleteBooking = (bookingId) => {
+    setAllBookings((prev) =>
+      prev.filter((booking) => booking.id !== bookingId)
+    );
+  };
+
+  // Get booking statistics
+  const getBookingStats = () => {
+    const total = allBookings.length;
+    const confirmed = allBookings.filter(
+      (b) => b.status === "Confirmed"
+    ).length;
+    const processing = allBookings.filter(
+      (b) => b.status === "Processing"
+    ).length;
+    const delivered = allBookings.filter(
+      (b) => b.status === "Delivered"
+    ).length;
+    const cancelled = allBookings.filter(
+      (b) => b.status === "Cancelled"
+    ).length;
+
+    const totalRevenue = allBookings
+      .filter((b) => b.status !== "Cancelled")
+      .reduce(
+        (sum, b) => sum + (b.bookingDetails?.totalPrice || b.price || 0),
+        0
+      );
+
+    const uniqueUsers = new Set(allBookings.map((b) => b.userId)).size;
+
+    return {
+      total,
+      confirmed,
+      processing,
+      delivered,
+      cancelled,
+      totalRevenue,
+      uniqueUsers,
     };
-    setBookings(prev => [...prev, booking]);
   };
 
   // Add new jewellery item
@@ -422,44 +568,60 @@ export const JewelleryProvider = ({ children }) => {
       rating: 0,
       reviews: 0,
     };
-    setJewellery(prev => [...prev, item]);
+    setJewellery((prev) => [...prev, item]);
   };
 
   // Update existing jewellery item
   const updateJewellery = (id, updatedItem) => {
-    setJewellery(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, ...updatedItem } : item
-      )
+    setJewellery((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...updatedItem } : item))
     );
   };
 
   // Delete jewellery item
   const deleteJewellery = (id) => {
-    setJewellery(prev => prev.filter(item => item.id !== id));
+    setJewellery((prev) => prev.filter((item) => item.id !== id));
   };
 
   // Get jewellery by category
   const getJewelleryByCategory = (category) => {
-    if (category === 'All') return jewellery;
-    return jewellery.filter(item => item.category === category);
+    if (category === "All") return jewellery;
+    return jewellery.filter((item) => item.category === category);
   };
 
   // Get all categories
   const getCategories = () => {
-    const categories = ['All', ...new Set(jewellery.map(item => item.category))];
+    const categories = [
+      "All",
+      ...new Set(jewellery.map((item) => item.category)),
+    ];
     return categories;
   };
 
   const value = {
     jewellery,
-    bookings,
+
+    // Centralized booking system
+    allBookings,
+    getUserBookings,
+    getAllBookings,
+    getBookingsByStatus,
+    getBookingsByDateRange,
+    updateBookingStatus,
+    deleteBooking,
+    clearAllBookings,
+    getBookingStats,
+    addBooking,
+
+    // Jewellery management
     addJewellery,
     updateJewellery,
     deleteJewellery,
-    addBooking,
     getJewelleryByCategory,
     getCategories,
+
+    // Legacy support (deprecated - use getUserBookings instead)
+    bookings: allBookings, // For backward compatibility
   };
 
   return (

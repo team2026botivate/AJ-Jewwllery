@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useJewellery } from "../context/JewelleryContext";
-import { fetchSheetData, addCategory } from "../services/googleSheetsService";
 import {
   Plus,
   X,
@@ -31,6 +30,7 @@ import {
   Shirt,
   Menu,
   ArrowUp,
+  FileText,
   ShoppingCart,
 } from "lucide-react";
 import Footer from "../components/Footer";
@@ -48,13 +48,12 @@ const AdminDashboard = () => {
     getCategories,
     bookings,
     addBooking,
+    clearAllBookings,
   } = useJewellery();
 
   const [activeTab, setActiveTab] = useState("categories");
-  const [sheetData, setSheetData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -117,6 +116,12 @@ const AdminDashboard = () => {
     description: "",
     image: "",
   });
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    description: "",
+    image: "",
+  });
+  const [categoryImagePreview, setCategoryImagePreview] = useState("");
 
   // Resolve public assets with Vite base (safe join)
   const asset = (name) => {
@@ -127,157 +132,157 @@ const AdminDashboard = () => {
     return `${cleanBase}/${clean}`;
   };
 
-  const [categoryImages, setCategoryImages] = useState({
-    All: { Default: [asset("download.jpg"), asset("images.jpg")] },
-    Animals: {
-      Lion: [
-        {
-          url: asset("download (1).jpg"),
-          description: "Beautiful lion pendant with intricate detailing",
-          weight: "15g",
-        },
-        {
-          url: asset("images (1).jpg"),
-          description: "Elegant lion necklace showcasing craftsmanship",
-          weight: "20g",
-        },
-      ],
-      Tiger: [
-        {
-          url: asset("download (2).jpg"),
-          description: "Stunning tiger brooch with vibrant colors",
-          weight: "18g",
-        },
-      ],
-    },
-    "Arabic Style 21k": {
-      Necklace: [
-        {
-          url: asset("download (2).jpg"),
-          description: "Traditional Arabic necklace in 21k gold",
-          weight: "30g",
-        },
-      ],
-      Bracelet: [
-        {
-          url: asset("images.jpg"),
-          description: "Elegant Arabic bracelet with cultural motifs",
-          weight: "22g",
-        },
-      ],
-    },
-    Rings: {
-      Diamond: [
-        {
-          url: asset("download (1).jpg"),
-          description: "Sparkling diamond ring with premium cut",
-          weight: "8g",
-        },
-      ],
-      Gold: [
-        {
-          url: asset("download (2).jpg"),
-          description: "Beautiful gold ring with classic design",
-          weight: "12g",
-        },
-      ],
-    },
-    Earrings: {
-      Pearl: [
-        {
-          url: asset("images.jpg"),
-          description: "Classic pearl earrings with timeless appeal",
-          weight: "6g",
-        },
-      ],
-      Gold: [
-        {
-          url: asset("download.jpg"),
-          description: "Solid gold earrings with modern design",
-          weight: "14g",
-        },
-      ],
-    },
-    Bracelets: {
-      Silver: [
-        {
-          url: asset("images.jpg"),
-          description: "Sterling silver bracelet with sleek finish",
-          weight: "16g",
-        },
-      ],
-      Gold: [
-        {
-          url: asset("download (2).jpg"),
-          description: "Luxurious gold bracelet for special occasions",
-          weight: "28g",
-        },
-      ],
-    },
-    Pendant: {
-      Heart: [
-        {
-          url: asset("download (1).jpg"),
-          description: "Romantic heart pendant with delicate chain",
-          weight: "7g",
-        },
-      ],
-      Cross: [
-        {
-          url: asset("download (2).jpg"),
-          description: "Elegant cross pendant with spiritual meaning",
-          weight: "13g",
-        },
-      ],
-    },
-    "Man Collection": {
-      Chain: [
-        {
-          url: asset("images.jpg"),
-          description: "Stylish men's chain with rugged design",
-          weight: "35g",
-        },
-      ],
-      Ring: [
-        {
-          url: asset("download (1).jpg"),
-          description: "Men's ring with sophisticated engraving",
-          weight: "17g",
-        },
-      ],
-    },
-    SET: {
-      Gold: [
-        {
-          url: asset("download (3).jpg"),
-          description: "Complete gold jewelry set for elegance",
-          weight: "45g",
-        },
-      ],
-      Diamond: [
-        {
-          url: asset("images.jpg"),
-          description: "Diamond jewelry set with sparkling gems",
-          weight: "32g",
-        },
-      ],
-    },
-    Mine: {
-      Diamond: [
-        {
-          url: asset("download (1).jpg"),
-          description: "Premium mined diamond with exceptional clarity",
-          weight: "4g",
-        },
-      ],
-      Ruby: [
-        {
-          url: asset("download (2).jpg"),
-          description: "Vivid ruby from natural mines",
-          weight: "6g",
-        },
-      ],
-    },
+  // Load category images from localStorage or use defaults
+  const [categoryImages, setCategoryImages] = useState(() => {
+    const saved = localStorage.getItem("admin-category-images-data");
+    const defaultImages = {
+      All: { Default: [asset("download.jpg"), asset("images.jpg")] },
+      Animals: {
+        Lion: [
+          {
+            url: asset("download (1).jpg"),
+            description: "Beautiful lion pendant with intricate detailing",
+            weight: "15g",
+          },
+        ],
+        Tiger: [
+          {
+            url: asset("download (2).jpg"),
+            description: "Stunning tiger brooch with vibrant colors",
+            weight: "18g",
+          },
+        ],
+      },
+      "Arabic Style 21k": {
+        Necklace: [
+          {
+            url: asset("download (2).jpg"),
+            description: "Traditional Arabic necklace in 21k gold",
+            weight: "30g",
+          },
+        ],
+        Bracelet: [
+          {
+            url: asset("images.jpg"),
+            description: "Elegant Arabic bracelet with cultural motifs",
+            weight: "22g",
+          },
+        ],
+      },
+      Rings: {
+        Diamond: [
+          {
+            url: asset("download (1).jpg"),
+            description: "Sparkling diamond ring with premium cut",
+            weight: "8g",
+          },
+        ],
+        Gold: [
+          {
+            url: asset("download (2).jpg"),
+            description: "Beautiful gold ring with classic design",
+            weight: "12g",
+          },
+        ],
+      },
+      Earrings: {
+        Pearl: [
+          {
+            url: asset("images.jpg"),
+            description: "Classic pearl earrings with timeless appeal",
+            weight: "6g",
+          },
+        ],
+        Gold: [
+          {
+            url: asset("download.jpg"),
+            description: "Solid gold earrings with modern design",
+            weight: "14g",
+          },
+        ],
+      },
+      Bracelets: {
+        Silver: [
+          {
+            url: asset("images.jpg"),
+            description: "Sterling silver bracelet with sleek finish",
+            weight: "16g",
+          },
+        ],
+        Gold: [
+          {
+            url: asset("download (2).jpg"),
+            description: "Luxurious gold bracelet for special occasions",
+            weight: "28g",
+          },
+        ],
+      },
+      Pendant: {
+        Heart: [
+          {
+            url: asset("download (1).jpg"),
+            description: "Romantic heart pendant with delicate chain",
+            weight: "7g",
+          },
+        ],
+        Cross: [
+          {
+            url: asset("download (2).jpg"),
+            description: "Elegant cross pendant with spiritual meaning",
+            weight: "13g",
+          },
+        ],
+      },
+      "Man Collection": {
+        Chain: [
+          {
+            url: asset("images.jpg"),
+            description: "Stylish men's chain with rugged design",
+            weight: "35g",
+          },
+        ],
+        Ring: [
+          {
+            url: asset("download (1).jpg"),
+            description: "Men's ring with sophisticated engraving",
+            weight: "17g",
+          },
+        ],
+      },
+      SET: {
+        Gold: [
+          {
+            url: asset("download (3).jpg"),
+            description: "Complete gold jewelry set for elegance",
+            weight: "45g",
+          },
+        ],
+        Diamond: [
+          {
+            url: asset("images.jpg"),
+            description: "Diamond jewelry set with sparkling gems",
+            weight: "32g",
+          },
+        ],
+      },
+      Mine: {
+        Diamond: [
+          {
+            url: asset("download (1).jpg"),
+            description: "Premium mined diamond with exceptional clarity",
+            weight: "4g",
+          },
+        ],
+        Ruby: [
+          {
+            url: asset("download (2).jpg"),
+            description: "Vivid ruby from natural mines",
+            weight: "6g",
+          },
+        ],
+      },
+    };
+    return saved ? JSON.parse(saved) : defaultImages;
   });
 
   const getCategoryCover = (category) => {
@@ -296,7 +301,7 @@ const AdminDashboard = () => {
     // Handle both string URLs and photo objects
     const firstPhoto = photos[0];
     if (typeof firstPhoto === "string") {
-      return asset(firstPhoto);
+      return firstPhoto; // Return the base64 string directly
     } else if (firstPhoto && firstPhoto.url) {
       return asset(firstPhoto.url);
     }
@@ -304,13 +309,27 @@ const AdminDashboard = () => {
     return asset("download.jpg");
   };
 
-  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-  const [newCategory, setNewCategory] = useState({
-    name: "",
-    description: "",
-    image: "",
-  });
-  const [categoryImagePreview, setCategoryImagePreview] = useState("");
+  const [expandedUsers, setExpandedUsers] = useState(new Set());
+
+  const toggleUserExpansion = (userName) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userName)) {
+      newExpanded.delete(userName);
+    } else {
+      newExpanded.add(userName);
+    }
+    setExpandedUsers(newExpanded);
+  };
+
+  const toggleSetExpansion = (bookingId) => {
+    const newExpanded = new Set(expandedSets);
+    if (newExpanded.has(bookingId)) {
+      newExpanded.delete(bookingId);
+    } else {
+      newExpanded.add(bookingId);
+    }
+    setExpandedSets(newExpanded);
+  };
 
   // Categories from context to keep Admin and Catalogue in sync
   const [uniqueCategories, setUniqueCategories] = useState(getCategories());
@@ -352,11 +371,6 @@ const AdminDashboard = () => {
 
   const totalPages = Math.ceil(filteredJewellery.length / itemsPerPage);
 
-  const addToCart = (item, quantity) => {
-    // For admin dashboard, we could add items to a temporary cart for testing purposes
-    alert(`Added ${item.name} to cart (Admin Mode)`);
-  };
-
   useEffect(() => {
     if (newJewellery.image) {
       setImagePreview(newJewellery.image);
@@ -370,36 +384,19 @@ const AdminDashboard = () => {
       setSidebarOpen(isDesktop);
     };
 
-    const loadSheetData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await fetchSheetData();
-        setSheetData(data);
-      } catch (err) {
-        console.error("Failed to load sheet data:", err);
-        setError("Failed to load data from Google Sheets");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     window.addEventListener("resize", handleResize);
     handleResize();
-    loadSheetData();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Back to top functionality
+  // Save category images to localStorage whenever they change
   useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 400);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    localStorage.setItem(
+      "admin-category-images-data",
+      JSON.stringify(categoryImages)
+    );
+  }, [categoryImages]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -474,6 +471,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleGenerateGramsPDF = () => {
+    // Generate PDF with grams information for bookings
+    const bookingsData = bookings.map((booking, index) => ({
+      "#": index + 1,
+      Name: booking.userName,
+      Category: booking.category,
+      Jewellery: booking.jewelleryName,
+      Items:
+        booking.bookingDetails?.totalItems ||
+        booking.items ||
+        booking.quantity ||
+        "N/A",
+      Grams: booking.bookingDetails?.totalGrams || booking.grams || "N/A",
+      Date: new Date(booking.bookingDate).toLocaleDateString(),
+      "Multi-Item": booking.bookingDetails?.isMultiItem
+        ? `${booking.bookingDetails.itemIndex}/${booking.bookingDetails.totalItemsInBooking}`
+        : "Single",
+    }));
+
+    // Simple PDF generation alert (in a real app, you'd use a PDF library)
+    alert(
+      `Generating PDF with ${bookingsData.length} booking records including essential data...`
+    );
+    console.log("Essential bookings data:", bookingsData);
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -492,7 +515,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleAddCategory = async (e) => {
+  const handleAddCategory = (e) => {
     e.preventDefault();
     if (!newCategory.name || !newCategory.image) {
       alert("Please fill in all required fields");
@@ -509,40 +532,17 @@ const AdminDashboard = () => {
       return;
     }
 
-    try {
-      // Show loading state
-      setIsLoading(true);
-      setError(null);
+    // Update local state immediately - store image locally
+    setUniqueCategories((prev) => [...prev, newCategory.name]);
+    setCategoryImages({
+      ...categoryImages,
+      [newCategory.name]: {
+        Default: [newCategory.image], // Store as simple string
+      },
+    });
 
-      // Add category to Google Sheet
-      await addCategory({
-        name: newCategory.name,
-        description: newCategory.description || "",
-        image: newCategory.image,
-      });
-
-      // Update local state if API call is successful
-      setUniqueCategories((prev) => [...prev, newCategory.name]);
-      setCategoryImages({
-        ...categoryImages,
-        [newCategory.name]: {
-          Default: [newCategory.image],
-        },
-      });
-
-      alert(`"${newCategory.name}" category added successfully!`);
-      resetCategoryForm();
-
-      // Refresh the sheet data to get the latest changes
-      const updatedData = await fetchSheetData();
-      setSheetData(updatedData);
-    } catch (error) {
-      console.error("Error adding category:", error);
-      setError(`Failed to add category: ${error.message}`);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
+    alert(`"${newCategory.name}" category added successfully with image!`);
+    resetCategoryForm();
   };
 
   const resetCategoryForm = () => {
@@ -640,7 +640,7 @@ const AdminDashboard = () => {
             </nav>
 
             {/* Logout */}
-            <div className="p-4 pb-6 md:pb-4 border-t border-gray-200">
+            <div className="p-4 pb-2 border-t border-gray-200 md:pb-4">
               <button
                 onClick={handleLogout}
                 className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
@@ -830,25 +830,6 @@ const AdminDashboard = () => {
                                   Tap to view collection
                                 </p>
                               </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Add a sample item from this category to cart
-                                  const sampleItem = jewellery.find(
-                                    (item) => item.category === category
-                                  );
-                                  if (sampleItem) {
-                                    addToCart(sampleItem, 1);
-                                  } else {
-                                    alert(
-                                      `No items available in ${category} category`
-                                    );
-                                  }
-                                }}
-                                className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:from-amber-600 hover:to-orange-600 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20"
-                              >
-                                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-                              </button>
                             </div>
                           </div>
                         </div>
@@ -1014,70 +995,234 @@ const AdminDashboard = () => {
             {/* Bookings Tab */}
             {activeTab === "bookings" && (
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                <div className="flex flex-col p-3 space-y-3 border-b border-gray-200 sm:flex-row sm:justify-between sm:items-center sm:p-6 sm:space-y-0">
+                  <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
                     User Bookings
                   </h2>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <button
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            "Are you sure you want to clear all bookings? This action cannot be undone."
+                          )
+                        ) {
+                          clearAllBookings();
+                          alert("All bookings have been cleared!");
+                        }
+                      }}
+                      className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-white bg-red-600 rounded transition-colors hover:bg-red-700"
+                    >
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="ml-1">Clear All</span>
+                    </button>
+                    <button
+                      onClick={handleGenerateGramsPDF}
+                      className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-white bg-blue-600 rounded transition-colors hover:bg-blue-700"
+                    >
+                      <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="ml-1">Essential PDF</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="p-6">
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          {[
-                            "#",
-                            "Name",
-                            "Category",
-                            "Jewellery",
-                            "Qty",
-                            "Date",
-                          ].map((header) => (
-                            <th
-                              key={header}
-                              className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                            >
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {bookings.length ? (
-                          bookings.map((b, i) => (
-                            <tr key={b.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {i + 1}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {b.userName}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {b.category}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {b.jewelleryName}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {b.quantity}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {new Date(b.bookingDate).toLocaleDateString()}
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td
-                              colSpan="6"
-                              className="px-6 py-12 text-center text-gray-500"
-                            >
-                              <BookOpen className="mx-auto mb-4 w-12 h-12 text-gray-300" />
-                              <p>No bookings yet</p>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                <div className="p-3 sm:p-6">
+                  <div className="space-y-6">
+                    {bookings.length ? (
+                      <div className="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            User Bookings
+                          </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  User
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  Items
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  Weight
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  Category
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  Jewelry Names
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  Date
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {(() => {
+                                const groupedBookings = bookings.reduce(
+                                  (acc, booking) => {
+                                    const userKey = booking.userName;
+                                    if (!acc[userKey]) {
+                                      acc[userKey] = [];
+                                    }
+                                    acc[userKey].push(booking);
+                                    return acc;
+                                  },
+                                  {}
+                                );
+
+                                return Object.entries(groupedBookings).map(
+                                  ([userName, userBookings]) => (
+                                    <tr
+                                      key={userName}
+                                      className="hover:bg-gray-50"
+                                    >
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                          <div className="flex-shrink-0 w-10 h-10">
+                                            <div className="flex justify-center items-center w-10 h-10 font-bold text-white bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
+                                              {userName.charAt(0).toUpperCase()}
+                                            </div>
+                                          </div>
+                                          <div className="ml-4">
+                                            <div className="text-sm font-medium text-gray-900">
+                                              {userName}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                        {userBookings.length} item
+                                        {userBookings.length > 1 ? "s" : ""}
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                        {userBookings
+                                          .reduce(
+                                            (sum, b) =>
+                                              sum +
+                                              (typeof b.grams === "number"
+                                                ? b.grams
+                                                : parseFloat(b.grams) || 0),
+                                            0
+                                          )
+                                          .toFixed(2)}
+                                        g
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                        <div className="flex flex-wrap gap-1">
+                                          {Object.entries(
+                                            userBookings.reduce(
+                                              (acc, booking) => {
+                                                acc[booking.category] =
+                                                  (acc[booking.category] || 0) +
+                                                  1;
+                                                return acc;
+                                              },
+                                              {}
+                                            )
+                                          ).map(([category, count]) => (
+                                            <span
+                                              key={category}
+                                              className="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded"
+                                            >
+                                              {category}: {count}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                        <div className="relative">
+                                          <select className="px-3 py-2 w-full text-sm bg-white rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">
+                                              Select to view jewelry...
+                                            </option>
+                                            {userBookings.map((booking) => (
+                                              <option
+                                                key={booking.id}
+                                                value={booking.id}
+                                              >
+                                                {booking.jewelleryName ||
+                                                  booking.name}{" "}
+                                                (
+                                                {(() => {
+                                                  const weight =
+                                                    booking.grams ||
+                                                    booking.weight ||
+                                                    0;
+                                                  const weightStr =
+                                                    String(weight);
+
+                                                  // Remove any existing 'g' characters and extra spaces
+                                                  const cleanWeight = weightStr
+                                                    .replace(/g+/g, "") // Remove all 'g' characters
+                                                    .replace(/\s+/g, "") // Remove all whitespace
+                                                    .trim();
+
+                                                  // Parse the numeric value
+                                                  const numWeight =
+                                                    parseFloat(cleanWeight);
+
+                                                  // If it's a valid number, format it with 2 decimal places
+                                                  if (
+                                                    !isNaN(numWeight) &&
+                                                    numWeight > 0
+                                                  ) {
+                                                    return `${numWeight.toFixed(
+                                                      2
+                                                    )}g`;
+                                                  }
+
+                                                  // If it's not a valid number, return as-is or default to 0.00g
+                                                  return weightStr.includes("g")
+                                                    ? weightStr
+                                                    : `${weightStr}g`;
+                                                })()}
+                                                )
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                        {new Date(
+                                          userBookings[0].bookingDate
+                                        ).toLocaleDateString()}
+                                      </td>
+                                    </tr>
+                                  )
+                                );
+                              })()}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-16 text-center bg-gray-50 rounded-xl border-2 border-gray-300 border-dashed">
+                        <div className="flex justify-center items-center mx-auto mb-4 w-20 h-20 bg-gray-100 rounded-full">
+                          <svg
+                            className="w-10 h-10 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                        </div>
+                        <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                          No bookings yet
+                        </h3>
+                        <p className="text-gray-600">
+                          User bookings will appear here when customers make
+                          purchases
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1249,7 +1394,7 @@ const AdminDashboard = () => {
       {/* Add/Edit Jewellery Modal */}
       {showAddModal && (
         <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 {editingItem ? "Edit Jewellery" : "Add New Jewellery"}
@@ -1262,116 +1407,123 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddJewellery} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {/* Category */}
+            <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-amber-500 scrollbar-track-gray-200">
+              <form onSubmit={handleAddJewellery} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {/* Category */}
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Category
+                    </label>
+                    <select
+                      value={newJewellery.category}
+                      onChange={(e) =>
+                        setNewJewellery({
+                          ...newJewellery,
+                          category: e.target.value,
+                        })
+                      }
+                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {uniqueCategories.slice(1).map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newJewellery.name}
+                      onChange={(e) =>
+                        setNewJewellery({
+                          ...newJewellery,
+                          name: e.target.value,
+                        })
+                      }
+                      placeholder="Jewellery name"
+                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Category
+                    Description
                   </label>
-                  <select
-                    value={newJewellery.category}
+                  <textarea
+                    value={newJewellery.description}
                     onChange={(e) =>
                       setNewJewellery({
                         ...newJewellery,
-                        category: e.target.value,
+                        description: e.target.value,
                       })
                     }
+                    rows={3}
                     className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    {uniqueCategories.slice(1).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Describe the jewellery..."
+                  />
                 </div>
 
-                {/* Name */}
+                {/* Photo Upload */}
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Name
+                    Upload Photo
                   </label>
                   <input
-                    type="text"
-                    value={newJewellery.name}
-                    onChange={(e) =>
-                      setNewJewellery({ ...newJewellery, name: e.target.value })
-                    }
-                    placeholder="Jewellery name"
-                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
                     required
                   />
                 </div>
-              </div>
 
-              {/* Description */}
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  value={newJewellery.description}
-                  onChange={(e) =>
-                    setNewJewellery({
-                      ...newJewellery,
-                      description: e.target.value,
-                    })
-                  }
-                  rows={3}
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                  placeholder="Describe the jewellery..."
-                />
-              </div>
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div className="p-4 rounded-xl border border-gray-300">
+                    <p className="mb-3 text-sm font-medium text-gray-700">
+                      Image Preview:
+                    </p>
+                    <div className="overflow-auto max-h-96 rounded-xl border border-gray-200 scrollbar-thin scrollbar-thumb-amber-500 scrollbar-track-gray-200">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="object-contain w-full min-h-48"
+                        onError={() => setImagePreview("")}
+                      />
+                    </div>
+                  </div>
+                )}
 
-              {/* Photo Upload */}
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Upload Photo
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                  required
-                />
-              </div>
-
-              {/* Image Preview */}
-              {imagePreview && (
-                <div className="p-4 rounded-xl border border-gray-300">
-                  <p className="mb-3 text-sm font-medium text-gray-700">
-                    Image Preview:
-                  </p>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="object-cover w-full h-48 rounded-xl"
-                    onError={() => setImagePreview("")}
-                  />
+                {/* Action Buttons */}
+                <div className="flex pt-6 space-x-4">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
+                  >
+                    {editingItem ? "Update" : "Save"} Jewellery
+                  </button>
                 </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex pt-6 space-x-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                >
-                  {editingItem ? "Update" : "Save"} Jewellery
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -1379,7 +1531,7 @@ const AdminDashboard = () => {
       {/* Add Category Modal */}
       {showAddCategoryModal && (
         <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 Add New Category
@@ -1392,87 +1544,91 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddCategory} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {/* Name */}
+            <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
+              <form onSubmit={handleAddCategory} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {/* Name */}
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Category Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newCategory.name}
+                      onChange={(e) =>
+                        setNewCategory({ ...newCategory, name: e.target.value })
+                      }
+                      placeholder="Category name"
+                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  {/* Description */}
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={newCategory.description}
+                      onChange={(e) =>
+                        setNewCategory({
+                          ...newCategory,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Category description"
+                      className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                {/* Photo Upload */}
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Category Name
+                    Upload Photo
                   </label>
                   <input
-                    type="text"
-                    value={newCategory.name}
-                    onChange={(e) =>
-                      setNewCategory({ ...newCategory, name: e.target.value })
-                    }
-                    placeholder="Category name"
-                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCategoryFileUpload}
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     required
                   />
                 </div>
-                {/* Description */}
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Description
-                  </label>
-                  <input
-                    type="text"
-                    value={newCategory.description}
-                    onChange={(e) =>
-                      setNewCategory({
-                        ...newCategory,
-                        description: e.target.value,
-                      })
-                    }
-                    placeholder="Category description"
-                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                {/* Image Preview */}
+                {categoryImagePreview && (
+                  <div className="p-4 rounded-xl border border-gray-300">
+                    <p className="mb-3 text-sm font-medium text-gray-700">
+                      Image Preview:
+                    </p>
+                    <div className="overflow-auto max-h-96 rounded-xl border border-gray-200 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
+                      <img
+                        src={categoryImagePreview}
+                        alt="Preview"
+                        className="object-contain w-full min-h-48"
+                        onError={() => setCategoryImagePreview("")}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Action Buttons */}
+                <div className="flex pt-6 space-x-4">
+                  <button
+                    type="button"
+                    onClick={resetCategoryForm}
+                    className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
+                  >
+                    Save Category
+                  </button>
                 </div>
-              </div>
-              {/* Photo Upload */}
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Upload Photo
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCategoryFileUpload}
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  required
-                />
-              </div>
-              {/* Image Preview */}
-              {categoryImagePreview && (
-                <div className="p-4 rounded-xl border border-gray-300">
-                  <p className="mb-3 text-sm font-medium text-gray-700">
-                    Image Preview:
-                  </p>
-                  <img
-                    src={categoryImagePreview}
-                    alt="Preview"
-                    className="object-cover w-full h-48 rounded-xl"
-                    onError={() => setCategoryImagePreview("")}
-                  />
-                </div>
-              )}
-              {/* Action Buttons */}
-              <div className="flex pt-6 space-x-4">
-                <button
-                  type="button"
-                  onClick={resetCategoryForm}
-                  className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
-                >
-                  Save Category
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -1495,11 +1651,45 @@ const AdminDashboard = () => {
 
             <div className="mb-6">
               <div className="flex items-center p-4 space-x-4 bg-red-50 rounded-xl border border-red-200">
-                <img
-                  src={deleteConfirm.image}
-                  alt={deleteConfirm.name}
-                  className="object-cover w-16 h-16 rounded-lg"
-                />
+                <div className="overflow-auto relative max-h-32 rounded-lg border border-red-200 max-w-32 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-200">
+                  <img
+                    src={deleteConfirm.image}
+                    alt={deleteConfirm.name}
+                    className="object-contain w-full h-full"
+                  />
+
+                  {/* Weight Badge Overlay - Similar to AdminCategoryPage */}
+                  {deleteConfirm.grams && (
+                    <div className="absolute bottom-2 left-1/2 z-20 transform -translate-x-1/2">
+                      <div className="px-3 py-1 rounded-full backdrop-blur-sm bg-black/60">
+                        <span className="text-xs font-semibold text-white">
+                          {(() => {
+                            const weightStr = String(deleteConfirm.grams);
+
+                            // Remove any existing 'g' characters and extra spaces
+                            const cleanWeight = weightStr
+                              .replace(/g+/g, "") // Remove all 'g' characters
+                              .replace(/\s+/g, "") // Remove all whitespace
+                              .trim();
+
+                            // Parse the numeric value
+                            const numWeight = parseFloat(cleanWeight);
+
+                            // If it's a valid number, format it with 2 decimal places
+                            if (!isNaN(numWeight) && numWeight > 0) {
+                              return `${numWeight.toFixed(2)}g`;
+                            }
+
+                            // If it's not a valid number, return as-is or default to 0.00g
+                            return weightStr.includes("g")
+                              ? weightStr
+                              : `${weightStr}g`;
+                          })()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">
                     {deleteConfirm.name}
@@ -1510,6 +1700,34 @@ const AdminDashboard = () => {
                   <p className="text-sm font-medium text-amber-600">
                     ₹{deleteConfirm.price.toLocaleString()}
                   </p>
+                  {/* Show weight in text format as well */}
+                  {deleteConfirm.grams && (
+                    <p className="text-sm font-medium text-blue-600">
+                      Weight:{" "}
+                      {(() => {
+                        const weightStr = String(deleteConfirm.grams);
+
+                        // Remove any existing 'g' characters and extra spaces
+                        const cleanWeight = weightStr
+                          .replace(/g+/g, "") // Remove all 'g' characters
+                          .replace(/\s+/g, "") // Remove all whitespace
+                          .trim();
+
+                        // Parse the numeric value
+                        const numWeight = parseFloat(cleanWeight);
+
+                        // If it's a valid number, format it with 2 decimal places
+                        if (!isNaN(numWeight) && numWeight > 0) {
+                          return `${numWeight.toFixed(2)}g`;
+                        }
+
+                        // If it's not a valid number, return as-is or default to 0.00g
+                        return weightStr.includes("g")
+                          ? weightStr
+                          : `${weightStr}g`;
+                      })()}
+                    </p>
+                  )}
                 </div>
               </div>
               <p className="mt-4 text-gray-700">
@@ -1540,7 +1758,7 @@ const AdminDashboard = () => {
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className="fixed right-6 bottom-24 z-40 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
+          className="fixed right-6 bottom-24 z-40 p-3 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg transition-all duration-300 transform hover:shadow-xl hover:scale-110 active:scale-95 md:bottom-8 animate-fade-in-up"
           title="Back to Top"
         >
           <ArrowUp className="w-5 h-5" />

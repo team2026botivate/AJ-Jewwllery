@@ -8,7 +8,6 @@ import {
   Image,
   FolderPlus,
   Edit3,
-  ShoppingCart,
 } from "lucide-react";
 
 const Subcategories = ({
@@ -17,8 +16,6 @@ const Subcategories = ({
   setCategoryImages,
   setSelectedCategory,
   showActions = true,
-  addToCart,
-  clickedItems,
 }) => {
   const [showAddSubcategoryModal, setShowAddSubcategoryModal] = useState(false);
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
@@ -354,7 +351,7 @@ const Subcategories = ({
                 {(() => {
                   const raw = typeof img === "object" ? img.weight : "";
                   const ws = String(raw || "18g").trim();
-                  const weightNum = parseFloat(ws.replace('g', '')) || 0;
+                  const weightNum = parseFloat(ws.replace("g", "")) || 0;
                   const text = `${weightNum.toFixed(2)}g`;
                   return (
                     <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 px-3 py-1.5 text-sm font-bold text-white bg-black/80 rounded-full backdrop-blur-sm shadow-lg">
@@ -386,9 +383,11 @@ const Subcategories = ({
                         addToCart(item, 1);
                       }}
                       className={`relative z-10 p-2 rounded-full border shadow-lg opacity-100 transition-all duration-300 transform sm:p-3 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 focus:outline-none focus:ring-2 focus:ring-white/70 ${
-                        clickedItems?.has(`${selectedCategory}-${selectedSubcategory}-${idx}`)
-                          ? 'bg-gradient-to-r from-green-500 to-green-600'
-                          : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                        clickedItems?.has(
+                          `${selectedCategory}-${selectedSubcategory}-${idx}`
+                        )
+                          ? "bg-gradient-to-r from-green-500 to-green-600"
+                          : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                       }`}
                     >
                       <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -522,39 +521,6 @@ const Subcategories = ({
                 ))}
               </div>
             </div>
-
-            {/* Add to Cart Button */}
-            {addToCart && (
-              <div className="absolute right-4 bottom-52 sm:bottom-56 sm:right-6">
-                <button
-                  onClick={() => {
-                    const currentImage = sortedImages[lightboxIndex];
-                    const item = {
-                      id: `${selectedCategory}-${selectedSubcategory}-${lightboxIndex}`,
-                      name: selectedSubcategory,
-                      description: `${selectedCategory} - ${selectedSubcategory} Photo ${
-                        lightboxIndex + 1
-                      }`,
-                      image: getImageUrl(currentImage),
-                      category: selectedCategory,
-                      price: 10000, // Default price for gallery items
-                      quantity: 1,
-                      weight: currentImage.weight || "",
-                    };
-                    addToCart(item, 1);
-                    closeLightbox();
-                  }}
-                  className={`flex gap-2 items-center px-4 py-2 font-semibold text-white rounded-xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-xl ${
-                    clickedItems?.has(`${selectedCategory}-${selectedSubcategory}-${lightboxIndex}`)
-                      ? 'bg-gradient-to-r from-green-500 to-green-600'
-                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
-                  }`}
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  <span className="hidden sm:inline">Add to Cart</span>
-                </button>
-              </div>
-            )}
           </div>
         )}
 
