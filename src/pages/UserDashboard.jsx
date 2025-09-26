@@ -722,10 +722,13 @@ const UserDashboard = () => {
 
       {/* Sidebar */}
       <div
-        className={`flex fixed top-0 left-0 z-[70] flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs bg-white border-r border-gray-200 shadow-xl h-screen lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 pb-20 overflow-y-auto overflow-x-hidden scrollbar-hide transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`flex fixed top-0 left-0 z-[70] bg-white flex-col justify-between w-full sm:w-[85vw] sm:max-w-xs border-r border-gray-200 shadow-xl lg:z-40 lg:shadow-none lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0 overflow-y-auto overflow-x-hidden scrollbar-hide transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
+        style={{
+          height: "100dvh", // Use dynamic viewport height for mobile browsers
+          paddingBottom: "max(env(safe-area-inset-bottom, 0px) + 2rem, 5rem)", // Better safe area handling
+        }}
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">
@@ -780,7 +783,7 @@ const UserDashboard = () => {
         </nav>
 
         {/* Logout - positioned higher on mobile */}
-        <div className="p-4 border-t border-gray-200 lg:absolute lg:bottom-0 lg:left-0 lg:right-0 lg:p-4 lg:pb-6 lg:border-t">
+        <div className="bottom-0 p-4 border-t border-gray-200 lg:border-t">
           <button
             onClick={handleLogout}
             className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
