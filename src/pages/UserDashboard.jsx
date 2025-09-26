@@ -739,7 +739,7 @@ const UserDashboard = () => {
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden"
+              className="p-2 rounded-lg transition-colors hover:bg-gray-100 lg:hidden ios-touch-target"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -783,10 +783,10 @@ const UserDashboard = () => {
         </nav>
 
         {/* Logout - positioned higher on mobile */}
-        <div className="bottom-0 p-4 border-t border-gray-200 lg:border-t">
+        <div className="bottom-0 p-4 border-t border-gray-200 lg:border-t ios-touch-target">
           <button
             onClick={handleLogout}
-            className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
+            className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700 ios-touch-target prevent-zoom"
             title="Logout"
           >
             <LogOut className="w-5 h-5" />
@@ -800,7 +800,7 @@ const UserDashboard = () => {
         <div className="hidden flex-col items-center py-4 w-16 bg-white border-r border-gray-200 shadow-xl lg:flex lg:w-72 lg:max-w-none lg:translate-x-0 lg:flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 mb-4 rounded-lg transition-colors hover:bg-gray-100"
+            className="p-2 mb-4 rounded-lg transition-colors hover:bg-gray-100 ios-touch-target"
             title="Show Sidebar"
           >
             <ChevronRight className="w-5 h-5" />
@@ -872,7 +872,7 @@ const UserDashboard = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowCartModal(true)}
-                  className="flex relative justify-center items-center w-10 h-10 text-gray-600 rounded-lg transition-colors hover:bg-gray-100 hover:text-gray-900"
+                  className="flex relative justify-center items-center w-10 h-10 text-gray-600 rounded-lg transition-colors hover:bg-gray-100 hover:text-gray-900 ios-touch-target"
                   title="Shopping Cart"
                 >
                   <ShoppingCart className="w-5 h-5" />
@@ -891,7 +891,7 @@ const UserDashboard = () => {
         <main
           className={`flex-1 ${
             selectedCategory !== "All" ? "pt-24" : "pt-16"
-          } p-4 sm:p-6 scrollbar-hide`}
+          } p-4 sm:p-6 scrollbar-hide ios-scroll-fix`}
         >
           {/* Jewellery Catalog */}
           {activeTab === "catalog" && (
@@ -929,11 +929,6 @@ const UserDashboard = () => {
                                   Tap to view collection
                                 </p>
                               </div>
-                              <button
-                                className={`p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 hover:from-amber-600 hover:to-orange-600`}
-                              >
-                                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-                              </button>
                             </div>
                           </div>
                         </div>
@@ -973,7 +968,17 @@ const UserDashboard = () => {
                           <span className="sm:hidden">Back</span>
                         </button>
                         <button
-                          onClick={() => setShowFilters(!showFilters)}
+                          onClick={() => {
+                            if (showFilters) {
+                              // If filters are open, clear them and close
+                              setMinWeight("");
+                              setMaxWeight("");
+                              setShowFilters(false);
+                            } else {
+                              // If filters are closed, open them
+                              setShowFilters(true);
+                            }
+                          }}
                           className={`flex items-center px-3 md:px-4 py-2 md:py-3 space-x-2 md:space-x-3 text-sm md:text-base font-semibold rounded-xl border-2 shadow-lg transition-all ${
                             showFilters
                               ? "text-white bg-gradient-to-r from-amber-500 to-orange-500 border-amber-500"
@@ -1654,7 +1659,7 @@ const UserDashboard = () => {
 
       {/* Cart Modal */}
       {showCartModal && (
-        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50 ios-modal">
           <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -1783,7 +1788,7 @@ const UserDashboard = () => {
 
       {/* Order Success Modal */}
       {showOrderSuccessModal && (
-        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50 ios-modal">
           <div className="p-8 w-full max-w-md text-center bg-white rounded-2xl shadow-xl">
             <div className="mb-6">
               <div className="flex justify-center items-center mx-auto mb-4 w-20 h-20 bg-green-100 rounded-full">
@@ -1824,7 +1829,7 @@ const UserDashboard = () => {
 
       {/* Order Details Modal */}
       {showOrderDetailsModal && selectedOrder && (
-        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50 ios-modal">
           <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -2083,7 +2088,7 @@ const UserDashboard = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50 ios-modal">
           <div className="p-6 w-full max-w-md bg-white rounded-2xl shadow-xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
