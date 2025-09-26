@@ -779,8 +779,8 @@ const UserDashboard = () => {
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 pb-6 border-t border-gray-200">
+        {/* Logout - positioned higher on mobile */}
+        <div className="p-4 border-t border-gray-200 lg:absolute lg:bottom-0 lg:left-0 lg:right-0 lg:p-4 lg:pb-6 lg:border-t">
           <button
             onClick={handleLogout}
             className="flex justify-center items-center px-4 py-3 space-x-2 w-full text-white bg-gray-600 rounded-xl transition-colors hover:bg-gray-700"
@@ -927,118 +927,7 @@ const UserDashboard = () => {
                                 </p>
                               </div>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const hasCategoryItems = Array.from(
-                                    clickedItems
-                                  ).some(
-                                    (id) =>
-                                      id &&
-                                      typeof id === "string" &&
-                                      id.startsWith(category + "-")
-                                  );
-                                  if (hasCategoryItems) {
-                                    // Remove all items from this category
-                                    const newCart = cart.filter(
-                                      (cartItem) =>
-                                        !cartItem.id.startsWith(category + "-")
-                                    );
-                                    setCart(newCart);
-                                    setClickedItems((prev) => {
-                                      const newSet = new Set(prev);
-                                      Array.from(prev).forEach((id) => {
-                                        if (
-                                          id &&
-                                          typeof id === "string" &&
-                                          id.startsWith(category + "-")
-                                        ) {
-                                          newSet.delete(id);
-                                        }
-                                      });
-                                      return newSet;
-                                    });
-                                    setToast({
-                                      message: `Removed all ${category} items from cart!`,
-                                      type: "info",
-                                      duration: 3000,
-                                    });
-                                  } else {
-                                    // Add all items from this category
-                                    const allImages = Object.entries(
-                                      categoryImages[category] || {}
-                                    ).flatMap(([subcategory, images]) =>
-                                      images.map((image, index) => {
-                                        const imageUrl =
-                                          typeof image === "string"
-                                            ? image
-                                            : image.url;
-                                        const imageDesc =
-                                          typeof image === "string"
-                                            ? `${category} ${subcategory}`
-                                            : image.description ||
-                                              `${category} ${subcategory}`;
-                                        const imageWeight =
-                                          typeof image === "string"
-                                            ? ""
-                                            : image.weight || "";
-                                        const itemId = `${category}-${subcategory}-${index}`;
-                                        return {
-                                          id: itemId,
-                                          category: category,
-                                          subcategory: subcategory,
-                                          name: `${category} ${subcategory}`,
-                                          description: imageDesc,
-                                          image: imageUrl,
-                                          weight: imageWeight,
-                                        };
-                                      })
-                                    );
-                                    const newCart = [...cart];
-                                    allImages.forEach((item) => {
-                                      const existingIndex = newCart.findIndex(
-                                        (cartItem) => cartItem.id === item.id
-                                      );
-                                      if (existingIndex !== -1) {
-                                        newCart[existingIndex].quantity += 1;
-                                      } else {
-                                        newCart.push({ ...item, quantity: 1 });
-                                      }
-                                      setClickedItems((prev) =>
-                                        new Set(prev).add(item.id)
-                                      );
-                                    });
-                                    setCart(newCart);
-                                    const totalWeight = allImages.reduce(
-                                      (sum, item) => {
-                                        const w =
-                                          parseFloat(
-                                            String(item.weight).replace("g", "")
-                                          ) || 0;
-                                        return sum + w;
-                                      },
-                                      0
-                                    );
-                                    setToast({
-                                      message: `Added ${
-                                        allImages.length
-                                      } ${category} items (${totalWeight.toFixed(
-                                        1
-                                      )}g total) to cart!`,
-                                      type: "success",
-                                      duration: 3000,
-                                    });
-                                  }
-                                }}
-                                className={`p-2 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 ${
-                                  Array.from(clickedItems).some(
-                                    (id) =>
-                                      id &&
-                                      typeof id === "string" &&
-                                      id.startsWith(category + "-")
-                                  )
-                                    ? "bg-gradient-to-r from-green-500 to-green-600"
-                                    : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                                }`}
+                                className={`p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border shadow-lg opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-xl border-white/20 hover:from-amber-600 hover:to-orange-600`}
                               >
                                 <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                               </button>
