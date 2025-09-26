@@ -104,10 +104,32 @@ body {
     touch-action: manipulation;
   }
 
-  /* Better scrolling on iOS */
-  .ios-scroll-fix {
+  /* Better scrolling on mobile devices */
+  .mobile-scroll-enhanced {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #f59e0b #f3f4f6;
+  }
+
+  /* Mobile scrollbar styling */
+  .mobile-scroll-enhanced::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .mobile-scroll-enhanced::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 3px;
+  }
+
+  .mobile-scroll-enhanced::-webkit-scrollbar-thumb {
+    background: #f59e0b;
+    border-radius: 3px;
+    border: 1px solid #f3f4f6;
+  }
+
+  .mobile-scroll-enhanced::-webkit-scrollbar-thumb:hover {
+    background: #d97706;
   }
 
   /* iOS Safari specific input fixes */
@@ -272,4 +294,15 @@ input[type="number"] {
 /* ✅ Subtle fade-in animation helper (paired with Tailwind's animate-fade-in) */
 .fade-in {
   animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -1,3 +1,4 @@
+import { jsPDF } from "jspdf";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -132,157 +133,54 @@ const AdminDashboard = () => {
     return `${cleanBase}/${clean}`;
   };
 
-  // Load category images from localStorage or use defaults
+  // Load category images from localStorage or use defaults with error handling
   const [categoryImages, setCategoryImages] = useState(() => {
-    const saved = localStorage.getItem("admin-category-images-data");
-    const defaultImages = {
-      All: { Default: [asset("download.jpg"), asset("images.jpg")] },
-      Animals: {
-        Lion: [
-          {
-            url: asset("download (1).jpg"),
-            description: "Beautiful lion pendant with intricate detailing",
-            weight: "15g",
-          },
-        ],
-        Tiger: [
-          {
-            url: asset("download (2).jpg"),
-            description: "Stunning tiger brooch with vibrant colors",
-            weight: "18g",
-          },
-        ],
-      },
-      "Arabic Style 21k": {
-        Necklace: [
-          {
-            url: asset("download (2).jpg"),
-            description: "Traditional Arabic necklace in 21k gold",
-            weight: "30g",
-          },
-        ],
-        Bracelet: [
-          {
-            url: asset("images.jpg"),
-            description: "Elegant Arabic bracelet with cultural motifs",
-            weight: "22g",
-          },
-        ],
-      },
-      Rings: {
-        Diamond: [
-          {
-            url: asset("download (1).jpg"),
-            description: "Sparkling diamond ring with premium cut",
-            weight: "8g",
-          },
-        ],
-        Gold: [
-          {
-            url: asset("download (2).jpg"),
-            description: "Beautiful gold ring with classic design",
-            weight: "12g",
-          },
-        ],
-      },
-      Earrings: {
-        Pearl: [
-          {
-            url: asset("images.jpg"),
-            description: "Classic pearl earrings with timeless appeal",
-            weight: "6g",
-          },
-        ],
-        Gold: [
-          {
-            url: asset("download.jpg"),
-            description: "Solid gold earrings with modern design",
-            weight: "14g",
-          },
-        ],
-      },
-      Bracelets: {
-        Silver: [
-          {
-            url: asset("images.jpg"),
-            description: "Sterling silver bracelet with sleek finish",
-            weight: "16g",
-          },
-        ],
-        Gold: [
-          {
-            url: asset("download (2).jpg"),
-            description: "Luxurious gold bracelet for special occasions",
-            weight: "28g",
-          },
-        ],
-      },
-      Pendant: {
-        Heart: [
-          {
-            url: asset("download (1).jpg"),
-            description: "Romantic heart pendant with delicate chain",
-            weight: "7g",
-          },
-        ],
-        Cross: [
-          {
-            url: asset("download (2).jpg"),
-            description: "Elegant cross pendant with spiritual meaning",
-            weight: "13g",
-          },
-        ],
-      },
-      "Man Collection": {
-        Chain: [
-          {
-            url: asset("images.jpg"),
-            description: "Stylish men's chain with rugged design",
-            weight: "35g",
-          },
-        ],
-        Ring: [
-          {
-            url: asset("download (1).jpg"),
-            description: "Men's ring with sophisticated engraving",
-            weight: "17g",
-          },
-        ],
-      },
-      SET: {
-        Gold: [
-          {
-            url: asset("download (3).jpg"),
-            description: "Complete gold jewelry set for elegance",
-            weight: "45g",
-          },
-        ],
-        Diamond: [
-          {
-            url: asset("images.jpg"),
-            description: "Diamond jewelry set with sparkling gems",
-            weight: "32g",
-          },
-        ],
-      },
-      Mine: {
-        Diamond: [
-          {
-            url: asset("download (1).jpg"),
-            description: "Premium mined diamond with exceptional clarity",
-            weight: "4g",
-          },
-        ],
-        Ruby: [
-          {
-            url: asset("download (2).jpg"),
-            description: "Vivid ruby from natural mines",
-            weight: "6g",
-          },
-        ],
-      },
-    };
-    return saved ? JSON.parse(saved) : defaultImages;
+    try {
+      const saved = localStorage.getItem("admin-category-images-data");
+      console.log("🔍 Raw localStorage data:", saved);
+
+      if (
+        saved &&
+        saved !== "undefined" &&
+        saved !== "{}" &&
+        saved !== "null"
+      ) {
+        const parsedData = JSON.parse(saved);
+        console.log(
+          "✅ Successfully loaded category images from localStorage:",
+          parsedData
+        );
+
+        // Validate the data structure
+        if (
+          parsedData &&
+          typeof parsedData === "object" &&
+          Object.keys(parsedData).length > 0
+        ) {
+          console.log("✅ Data structure is valid, returning loaded data");
+          console.log("📊 Loaded categories:", Object.keys(parsedData));
+          return parsedData;
+        } else {
+          console.warn("⚠️ Invalid or empty data structure, using defaults");
+          console.log("📊 Parsed data:", parsedData);
+        }
+      } else {
+        console.log(
+          "ℹ️ No saved data found or data is empty/null/undefined, using defaults"
+        );
+        console.log("📊 Saved value:", saved);
+      }
+    } catch (error) {
+      console.error(
+        "❌ Error loading category images from localStorage:",
+        error
+      );
+      console.log("🔄 Falling back to default data");
+    }
+
+    // Return default images if no saved data or error occurred
+    console.log("📋 Using default category images");
+    return getDefaultCategoryImages();
   });
 
   const getCategoryCover = (category) => {
@@ -390,16 +288,116 @@ const AdminDashboard = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Save category images to localStorage whenever they change
+  // Verification: Ensure localStorage data is not overwritten after mount
   useEffect(() => {
-    localStorage.setItem(
-      "admin-category-images-data",
-      JSON.stringify(categoryImages)
+    console.log(
+      "🔄 AdminDashboard mounted, verifying localStorage integrity..."
     );
+
+    const saved = localStorage.getItem("admin-category-images-data");
+    console.log("🔍 Post-mount localStorage check:", saved);
+
+    if (saved && saved !== "undefined" && saved !== "{}" && saved !== "null") {
+      try {
+        const parsedData = JSON.parse(saved);
+        console.log("🔍 Post-mount parsed data:", parsedData);
+
+        // Check if current state matches localStorage
+        const currentKeys = Object.keys(categoryImages);
+        const savedKeys = Object.keys(parsedData);
+
+        console.log("📊 Current state categories:", currentKeys);
+        console.log("📊 localStorage categories:", savedKeys);
+
+        // If localStorage has more categories than current state, update state
+        if (savedKeys.length > currentKeys.length) {
+          console.log("🔄 localStorage has more data, updating state");
+          setCategoryImages(parsedData);
+        } else if (
+          JSON.stringify(categoryImages) !== JSON.stringify(parsedData)
+        ) {
+          console.log("🔄 Data mismatch detected, syncing with localStorage");
+          setCategoryImages(parsedData);
+        } else {
+          console.log("✅ Data is synchronized correctly");
+        }
+      } catch (error) {
+        console.error("❌ Error verifying localStorage data:", error);
+      }
+    } else {
+      console.log("ℹ️ No valid localStorage data found after mount");
+    }
+  }, []); // Run only once after mount
+
+  // Auto-save categoryImages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "admin-category-images-data",
+        JSON.stringify(categoryImages)
+      );
+      console.log("✅ Category images saved to localStorage:", categoryImages);
+    } catch (err) {
+      console.error("❌ Failed to save category images to localStorage:", err);
+    }
   }, [categoryImages]);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  // Ensure uniqueCategories includes any categories present in categoryImages (persists after refresh)
+  useEffect(() => {
+    if (!categoryImages) return;
+    const keys = Object.keys(categoryImages).filter((k) => k && k !== "All");
+    if (!keys.length) return;
+
+    setUniqueCategories((prev) => {
+      const merged = Array.from(new Set([...(prev || []), ...keys]));
+      // Always ensure "All" is at index 0
+      const withoutAll = merged.filter((c) => c !== "All");
+      return ["All", ...withoutAll];
+    });
+  }, [categoryImages]);
+
+  // Auto-save categoryImages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "admin-category-images-data",
+        JSON.stringify(categoryImages)
+      );
+      // Optional: console log for confirmation
+      console.log("✅ Category images saved to localStorage:", categoryImages);
+    } catch (err) {
+      console.error("❌ Failed to save category images to localStorage:", err);
+    }
+  }, [categoryImages]);
+
+  // Ensure uniqueCategories includes any categories present in categoryImages (persists after refresh)
+  useEffect(() => {
+    if (!categoryImages) return;
+    const keys = Object.keys(categoryImages).filter((k) => k && k !== "All");
+    if (!keys.length) return;
+
+    setUniqueCategories((prev) => {
+      const merged = Array.from(new Set([...(prev || []), ...keys]));
+      // Always ensure "All" is at index 0 if present
+      const withoutAll = merged.filter((c) => c !== "All");
+      return ["All", ...withoutAll];
+    });
+  }, [categoryImages]);
+
+  // Handle scroll for back-to-top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Logout handler for sidebar Logout button
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   const handleAddJewellery = (e) => {
@@ -460,18 +458,25 @@ const AdminDashboard = () => {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target.result;
         setNewJewellery({ ...newJewellery, image: imageUrl });
         setImagePreview(imageUrl);
+        console.log("Image loaded successfully:", imageUrl);
+      };
+      reader.onerror = () => {
+        console.error("Error reading file");
+        alert("Error loading image. Please try again.");
       };
       reader.readAsDataURL(file);
+    } else {
+      alert("Please select a valid image file.");
     }
   };
 
-  const handleGenerateGramsPDF = () => {
+  const handleGenerateGramsPDF = async () => {
     // Generate PDF with grams information for bookings
     const bookingsData = bookings.map((booking, index) => ({
       "#": index + 1,
@@ -488,18 +493,189 @@ const AdminDashboard = () => {
       "Multi-Item": booking.bookingDetails?.isMultiItem
         ? `${booking.bookingDetails.itemIndex}/${booking.bookingDetails.totalItemsInBooking}`
         : "Single",
+      // Primary image for backward compatibility
+      Image:
+        Array.isArray(booking.images) && booking.images.length
+          ? booking.images[0]
+          : booking.image || "",
+      // Full images array for multi-image rendering
+      Images:
+        (Array.isArray(booking.images) && booking.images.length
+          ? booking.images
+          : (booking.image ? [booking.image] : [])) || [],
     }));
 
-    // Simple PDF generation alert (in a real app, you'd use a PDF library)
-    alert(
-      `Generating PDF with ${bookingsData.length} booking records including essential data...`
+    // Helper: convert normal URL to dataURL (may fail due to CORS)
+    const toDataURL = (src) =>
+      new Promise((resolve) => {
+        if (!src || typeof src !== "string" || src.startsWith("data:image")) {
+          // Already a data URL or empty
+          return resolve(src || "");
+        }
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL("image/jpeg", 0.92);
+            resolve(dataURL);
+          } catch (e) {
+            console.warn("Canvas conversion failed, skipping image:", e);
+            resolve("");
+          }
+        };
+        img.onerror = () => resolve("");
+        img.src = src;
+      });
+
+    // Preload/normalize images to data URLs (all images per booking)
+    const dataWithImages = await Promise.all(
+      bookingsData.map(async (b) => {
+        const images = Array.isArray(b.Images) ? b.Images : [];
+        const prepared = await Promise.all(images.map((src) => toDataURL(src)));
+        return {
+          ...b,
+          Image: await toDataURL(b.Image),
+          Images: prepared.filter(Boolean),
+        };
+      })
     );
-    console.log("Essential bookings data:", bookingsData);
+
+    // Create PDF
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Jewellery Bookings Report", 20, 20);
+
+    let y = 30;
+    const pageHeight =
+      doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    const margin = 20;
+
+    const addLine = (text, x, lineHeight = 6) => {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(String(text), x, y);
+      y += lineHeight;
+    };
+
+    const addImageSafe = (imgSrc, x, yTop, w, h) => {
+      try {
+        if (!imgSrc) return false;
+        let format = "JPEG";
+        if (imgSrc.startsWith("data:image/")) {
+          const fmt = imgSrc.slice(11, imgSrc.indexOf(";"));
+          format = fmt?.toUpperCase() || "JPEG";
+        }
+        doc.addImage(imgSrc, format, x, yTop, w, h);
+        return true;
+      } catch (e) {
+        console.warn("Skipping image for PDF:", e);
+        return false;
+      }
+    };
+
+    doc.setFontSize(12);
+    dataWithImages.forEach((b, idx) => {
+      // Booking header
+      addLine(`Booking ${idx + 1}`, margin, 8);
+
+      // Images block (support multiple images in rows)
+      const imgHeight = 30;
+      const imgWidth = 30;
+      const gap = 6;
+      const maxPerRow = 4; // adjust as needed
+      const blockXStart = margin;
+      let blockUsed = false;
+      let rowIndex = 0;
+      if (Array.isArray(b.Images) && b.Images.length) {
+        for (let i = 0; i < b.Images.length; i++) {
+          const col = i % maxPerRow;
+          if (col === 0) {
+            // New row: check for page space
+            if (y + imgHeight > pageHeight - margin) {
+              doc.addPage();
+              y = margin;
+            }
+            rowIndex++;
+          }
+          const x = blockXStart + col * (imgWidth + gap);
+          addImageSafe(b.Images[i], x, y, imgWidth, imgHeight);
+          blockUsed = true;
+          // If last col, advance to next row
+          if (col === maxPerRow - 1 || i === b.Images.length - 1) {
+            y += imgHeight + 4;
+          }
+        }
+      } else if (b.Image) {
+        if (y + imgHeight > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        addImageSafe(b.Image, blockXStart, y, imgWidth, imgHeight);
+        blockUsed = true;
+        y += imgHeight + 4;
+      }
+
+      const textX = margin; // Text on new line beneath images for clarity
+      const startY = y;
+
+      [
+        ["User", b.Name],
+        ["Category", b.Category],
+        ["Jewellery", b.Jewellery],
+        ["Items", b.Items],
+        ["Grams", b.Grams],
+        ["Date", b.Date],
+        ["Type", b["Multi-Item"]],
+      ].forEach(([k, v]) => addLine(`${k}: ${v}`, textX, 6));
+
+      // Advance y past the text block
+      y = startY + 8;
+    });
+
+    // Save PDF
+    doc.save("jewellery_bookings_report.pdf");
+
+    // Alert user
+    alert(
+      `PDF generated with ${bookingsData.length} booking records including images! Check your downloads.`
+    );
+    console.log("PDF generated with bookings data:", bookingsData);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  // Debug function to check localStorage data
+  const debugLocalStorage = () => {
+    const saved = localStorage.getItem("admin-category-images-data");
+    console.log("🔍 Current localStorage data:", saved);
+    console.log("🔍 Parsed data:", saved ? JSON.parse(saved) : "No data");
+    console.log("🔍 Current state data:", categoryImages);
+    console.log("🔍 State keys:", Object.keys(categoryImages));
+    console.log(
+      "🔍 localStorage keys:",
+      saved ? Object.keys(JSON.parse(saved)) : "No data"
+    );
+    alert("Check console for detailed localStorage debug info");
+  };
+
+  // Function to clear localStorage (for testing)
+  const clearCategoryStorage = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all category images from localStorage? This cannot be undone."
+      )
+    ) {
+      localStorage.removeItem("admin-category-images-data");
+      console.log("🗑️ localStorage cleared");
+      window.location.reload(); // Reload to reset state
+    }
   };
 
   const handleCategoryFileUpload = (e) => {
@@ -532,14 +708,20 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Update local state immediately - store image locally
-    setUniqueCategories((prev) => [...prev, newCategory.name]);
-    setCategoryImages({
+    // Create new category with image
+    const updatedCategoryImages = {
       ...categoryImages,
       [newCategory.name]: {
-        Default: [newCategory.image], // Store as simple string
+        Default: [newCategory.image], // Store as simple string for new categories
       },
-    });
+    };
+
+    console.log("Adding new category:", newCategory.name);
+    console.log("New category data:", updatedCategoryImages[newCategory.name]);
+
+    // Update local state immediately
+    setUniqueCategories((prev) => [...prev, newCategory.name]);
+    setCategoryImages(updatedCategoryImages);
 
     alert(`"${newCategory.name}" category added successfully with image!`);
     resetCategoryForm();
@@ -551,6 +733,10 @@ const AdminDashboard = () => {
     setShowAddCategoryModal(false);
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach((input) => (input.value = ""));
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -1030,9 +1216,26 @@ const AdminDashboard = () => {
                     {bookings.length ? (
                       <div className="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
                         <div className="px-6 py-4 border-b border-gray-200">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            User Bookings
-                          </h3>
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={(() => {
+                                const b = bookings && bookings[0];
+                                if (!b) return "https://via.placeholder.com/32x32?text=No";
+                                const img = Array.isArray(b.images) && b.images.length
+                                  ? b.images[0]
+                                  : b.image;
+                                return img || "https://via.placeholder.com/32x32?text=No";
+                              })()}
+                              alt="Latest booking"
+                              className="w-8 h-8 rounded object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = "https://via.placeholder.com/32x32?text=No";
+                              }}
+                            />
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              User Bookings
+                            </h3>
+                          </div>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="min-w-full divide-y divide-gray-200">
@@ -1040,6 +1243,9 @@ const AdminDashboard = () => {
                               <tr>
                                 <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                   User
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                  Image
                                 </th>
                                 <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                   Items
@@ -1054,7 +1260,13 @@ const AdminDashboard = () => {
                                   Jewelry Names
                                 </th>
                                 <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                  Date
+                                  <div className="flex items-center space-x-4">
+                                    <span>Date</span>
+                                    <FileText
+                                      className="w-4 h-4 text-gray-400"
+                                      title="PDF Available"
+                                    />
+                                  </div>
                                 </th>
                               </tr>
                             </thead>
@@ -1091,6 +1303,16 @@ const AdminDashboard = () => {
                                             </div>
                                           </div>
                                         </div>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <img
+                                          src={
+                                            userBookings[0].image ||
+                                            "https://via.placeholder.com/64x64?text=No+Image"
+                                          }
+                                          alt="Jewellery"
+                                          className="object-cover w-16 h-16 rounded-xl"
+                                        />
                                       </td>
                                       <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                                         {userBookings.length} item
@@ -1132,56 +1354,16 @@ const AdminDashboard = () => {
                                         </div>
                                       </td>
                                       <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                                        <div className="relative">
-                                          <select className="px-3 py-2 w-full text-sm bg-white rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            <option value="">
-                                              Select to view jewelry...
-                                            </option>
-                                            {userBookings.map((booking) => (
-                                              <option
-                                                key={booking.id}
-                                                value={booking.id}
-                                              >
-                                                {booking.jewelleryName ||
-                                                  booking.name}{" "}
-                                                (
-                                                {(() => {
-                                                  const weight =
-                                                    booking.grams ||
-                                                    booking.weight ||
-                                                    0;
-                                                  const weightStr =
-                                                    String(weight);
-
-                                                  // Remove any existing 'g' characters and extra spaces
-                                                  const cleanWeight = weightStr
-                                                    .replace(/g+/g, "") // Remove all 'g' characters
-                                                    .replace(/\s+/g, "") // Remove all whitespace
-                                                    .trim();
-
-                                                  // Parse the numeric value
-                                                  const numWeight =
-                                                    parseFloat(cleanWeight);
-
-                                                  // If it's a valid number, format it with 2 decimal places
-                                                  if (
-                                                    !isNaN(numWeight) &&
-                                                    numWeight > 0
-                                                  ) {
-                                                    return `${numWeight.toFixed(
-                                                      2
-                                                    )}g`;
-                                                  }
-
-                                                  // If it's not a valid number, return as-is or default to 0.00g
-                                                  return weightStr.includes("g")
-                                                    ? weightStr
-                                                    : `${weightStr}g`;
-                                                })()}
-                                                )
-                                              </option>
-                                            ))}
-                                          </select>
+                                        <div className="flex flex-wrap gap-1">
+                                          {userBookings.map((booking) => (
+                                            <span
+                                              key={booking.id}
+                                              className="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded"
+                                            >
+                                              {booking.jewelleryName ||
+                                                booking.name}
+                                            </span>
+                                          ))}
                                         </div>
                                       </td>
                                       <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
@@ -1458,7 +1640,7 @@ const AdminDashboard = () => {
 
                 {/* Description */}
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                  <label className="block mb-2 text-sm text-gray-700 font-mFedium">
                     Description
                   </label>
                   <textarea
@@ -1499,8 +1681,7 @@ const AdminDashboard = () => {
                       <img
                         src={imagePreview}
                         alt="Preview"
-                        className="object-contain w-full min-h-48"
-                        onError={() => setImagePreview("")}
+                        className="object-cover w-full min-h-48"
                       />
                     </div>
                   </div>

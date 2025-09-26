@@ -388,7 +388,18 @@ export const JewelleryProvider = ({ children }) => {
   const [allBookings, setAllBookings] = useState(() => {
     // Try to load from localStorage first, fallback to empty array
     const saved = localStorage.getItem("all-bookings-data");
-    return saved ? JSON.parse(saved) : [];
+    const base = saved ? JSON.parse(saved) : [];
+    // Normalize any stored image paths to respect app base; keep data URLs unchanged
+    return base.map((b) => {
+      const normalized = { ...b };
+      if (typeof normalized.image === "string") {
+        normalized.image = asset(normalized.image);
+      }
+      if (Array.isArray(normalized.images)) {
+        normalized.images = normalized.images.map((img) => asset(img));
+      }
+      return normalized;
+    });
   });
 
   // Save all bookings to localStorage whenever they change
@@ -416,6 +427,11 @@ export const JewelleryProvider = ({ children }) => {
 
     // Create booking entries for each item
     const newBookings = itemsArray.map((item, index) => {
+      // Normalize image(s) for persistence and correct base path
+      const primaryImage = asset(item.image);
+      const imagesArr = Array.isArray(item.images)
+        ? item.images.map((img) => asset(img))
+        : undefined;
       const booking = {
         ...bookingData,
         ...item,
@@ -424,6 +440,8 @@ export const JewelleryProvider = ({ children }) => {
           .substr(2, 9)}-${index}`, // Unique ID for each item
         bookingDate: new Date().toISOString(),
         status: "Confirmed",
+        image: primaryImage,
+        images: imagesArr,
         // User information - prioritize passed user data
         userId:
           currentUser?.id ||

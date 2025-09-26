@@ -494,7 +494,7 @@ const UserDashboard = () => {
   const getCartItemCount = () =>
     cart.reduce((total, item) => total + item.quantity, 0);
 
-  const confirmOrder = () => {
+  const confirmOrder = async () => {
     console.log("Confirming order, cart:", cart);
 
     // Removed PDF generation as per user request
@@ -532,19 +532,44 @@ const UserDashboard = () => {
           quantity: item.quantity,
           weight: item.weight || "",
           userId: user?.id || "guest",
+          image: item.image, // include primary image
+          images: item.images ? item.images : [item.image].filter(Boolean),
         });
       });
     }
 
     // Add to user's orders
-    const newBookings = cart.map((item, index) => ({
-      id: `${Date.now()}-${index}`,
-      jewelleryName: item.name,
-      category: item.category,
-      quantity: item.quantity,
-      weight: item.weight || "",
-      bookingDate: new Date().toISOString(),
-      status: "Confirmed",
+    const newBookings = await Promise.all(cart.map(async (item, index) => {
+      console.log("Item image:", item.image);
+      let imageUrl = item.image;
+      if (imageUrl && !imageUrl.startsWith("data:image/")) {
+        // Convert URL to data URL
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          const dataUrl = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          imageUrl = dataUrl;
+          console.log("Converted image to data URL:", imageUrl);
+        } catch (error) {
+          console.error("Error converting image:", error);
+          imageUrl = "https://via.placeholder.com/64x64?text=No+Image";
+        }
+      }
+      return {
+        id: `${Date.now()}-${index}`,
+        jewelleryName: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        weight: item.weight || "",
+        bookingDate: new Date().toISOString(),
+        status: "Confirmed",
+        image: imageUrl, // Ensure this is a data URL or fallback
+      };
     }));
 
     console.log("New bookings:", newBookings);
@@ -852,7 +877,7 @@ const UserDashboard = () => {
         style={{
           scrollBehavior: "auto",
           minHeight: "100dvh", // Use dynamic viewport height
-          paddingBottom: "5rem" // Account for footer height
+          paddingBottom: "5rem", // Account for footer height
         }}
       >
         {/* Top Bar */}
@@ -1349,9 +1374,11 @@ const UserDashboard = () => {
                     >
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center space-x-3">
-                          <div className="flex justify-center items-center w-8 h-8 text-sm font-semibold text-amber-600 bg-amber-100 rounded-full">
-                            {index + 1}
-                          </div>
+                          <img
+                            src={booking.image}
+                            alt={booking.jewelleryName}
+                            className="object-cover w-16 h-16 rounded-xl"
+                          />
                           <div>
                             <h3 className="font-semibold text-gray-900">
                               {booking.jewelleryName}
@@ -1614,17 +1641,12 @@ const UserDashboard = () => {
                   Image URL
                 </label>
                 <input
-                  type="url"
-                  value={newJewellery.image}
-                  onChange={(e) =>
-                    setNewJewellery({ ...newJewellery, image: e.target.value })
-                  }
-                  placeholder="https://example.com/image.jpg"
+                  type="file"
+                  onChange={handleFileUpload}
                   className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   required
                 />
               </div>
-
               {/* Image Preview */}
               {imagePreview && (
                 <div className="p-4 rounded-xl border border-gray-300">
@@ -1635,7 +1657,6 @@ const UserDashboard = () => {
                     src={imagePreview}
                     alt="Preview"
                     className="object-cover w-full h-48 rounded-xl"
-                    onError={() => setImagePreview("")}
                   />
                 </div>
               )}

@@ -538,7 +538,7 @@ const AdminCategoryPage = () => {
                 </div>
 
                 {/* Sticky Filter/Sort Controls */}
-                <div className="sticky top-32 z-50 p-3 bg-white rounded-md border border-gray-200 shadow-sm">
+                <div className="overflow-y-auto sticky top-32 z-50 p-3 bg-white rounded-md border border-gray-200 shadow-sm scrollbar-thin scrollbar-thumb-green-500 scrollbar-track-gray-200">
                   <div className="flex flex-wrap gap-2 justify-between items-center md:gap-4">
                     <div className="flex flex-wrap gap-2 items-center md:gap-3">
                       <button
@@ -640,8 +640,8 @@ const AdminCategoryPage = () => {
 
                                   // Remove any existing 'g' characters and extra spaces
                                   const cleanWeight = weightStr
-                                    .replace(/g+/g, '') // Remove all 'g' characters
-                                    .replace(/\s+/g, '') // Remove all whitespace
+                                    .replace(/g+/g, "") // Remove all 'g' characters
+                                    .replace(/\s+/g, "") // Remove all whitespace
                                     .trim();
 
                                   // Parse the numeric value
@@ -653,7 +653,9 @@ const AdminCategoryPage = () => {
                                   }
 
                                   // If it's not a valid number, return as-is or default to 0g
-                                  return weightStr.includes('g') ? weightStr : `${weightStr}g`;
+                                  return weightStr.includes("g")
+                                    ? weightStr
+                                    : `${weightStr}g`;
                                 })()}
                               </span>
                             </div>
@@ -686,105 +688,124 @@ const AdminCategoryPage = () => {
 
       {/* Add Photo Modal */}
       {showAddPhotoModal && (
-        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/50">
-          <div className="p-6 w-full max-w-lg bg-white rounded-2xl shadow-xl">
-            <div className="flex justify-between items-center mb-6">
+        <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/50 ios-modal">
+          <div
+            className="p-6 w-full max-w-lg bg-white rounded-2xl shadow-xl max-h-[80vh] overflow-hidden flex flex-col ios-touch-target desktop-modal-compact"
+            style={{
+              maxHeight:
+                "calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem)",
+              marginTop: "env(safe-area-inset-top)",
+              marginBottom: "env(safe-area-inset-bottom)",
+              borderRadius: "12px",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              maxWidth: "min(85vw, 420px)", // Slightly smaller for desktop
+            }}
+          >
+            <div className="flex justify-between items-center mb-6 ios-touch-target">
               <h3 className="text-xl font-semibold text-gray-900">
                 Add Photo to {selectedCategory}
               </h3>
               <button
                 onClick={resetPhotoForm}
-                className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100"
+                className="p-2 text-gray-400 rounded-lg hover:text-gray-600 hover:bg-gray-100 ios-touch-target"
                 aria-label="Close"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleAddPhotoSubmit} className="space-y-5">
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={selectedCategory}
-                  readOnly
-                  disabled
-                  className="px-4 py-3 w-full text-gray-600 bg-gray-100 rounded-xl border border-gray-300"
-                />
-              </div>
-
-              {/* Description removed per request */}
-
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Weight (g, optional)
-                </label>
-                <input
-                  type="number"
-                  value={newPhoto.weight}
-                  onChange={(e) =>
-                    setNewPhoto((p) => ({ ...p, weight: e.target.value }))
-                  }
-                  placeholder="e.g. 12"
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Upload Photo
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    console.log("File input changed, files:", e.target.files);
-                    handlePhotoFileUpload(e);
-                  }}
-                  className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                  required
-                />
-              </div>
-
-              {photoPreview && (
-                <div className="p-4 rounded-xl border border-gray-300">
-                  <p className="mb-3 text-sm font-medium text-gray-700">
-                    Image Preview:
-                  </p>
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="object-cover w-full h-48 rounded-xl"
-                    onError={(e) => {
-                      console.error("Image failed to load:", photoPreview);
-                      console.error("Image element error:", e);
-                      setPhotoPreview("");
-                    }}
-                    onLoad={() => {
-                      console.log("Image loaded successfully:", photoPreview);
-                    }}
+            <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-amber-500 scrollbar-track-gray-200 ios-scroll-fix mobile-scroll-enhanced"
+                 style={{
+                   scrollbarWidth: 'thin',
+                   scrollbarColor: '#f59e0b #f3f4f6',
+                   WebkitOverflowScrolling: 'touch',
+                   overscrollBehavior: 'contain'
+                 }}>
+              <form onSubmit={handleAddPhotoSubmit} className="space-y-5">
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Category
+                  </label>
+                  <input
+                    value={selectedCategory}
+                    readOnly
+                    disabled
+                    className="px-4 py-3 w-full text-gray-600 bg-gray-100 rounded-xl border border-gray-300 ios-touch-target"
                   />
                 </div>
-              )}
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={resetPhotoForm}
-                  className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600"
-                >
-                  Save Photo
-                </button>
-              </div>
-            </form>
+                {/* Description removed per request */}
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Weight (g, optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={newPhoto.weight}
+                    onChange={(e) =>
+                      setNewPhoto((p) => ({ ...p, weight: e.target.value }))
+                    }
+                    placeholder="e.g. 12"
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 ios-touch-target"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Upload Photo
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      console.log("File input changed, files:", e.target.files);
+                      handlePhotoFileUpload(e);
+                    }}
+                    className="px-4 py-3 w-full rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 ios-touch-target"
+                    required
+                  />
+                </div>
+
+                {photoPreview && (
+                  <div className="p-4 rounded-xl border border-gray-300">
+                    <p className="mb-3 text-sm font-medium text-gray-700">
+                      Image Preview:
+                    </p>
+                    <img
+                      src={photoPreview}
+                      alt="Preview"
+                      className="object-cover w-full h-48 rounded-xl"
+                      onError={(e) => {
+                        console.error("Image failed to load:", photoPreview);
+                        console.error("Image element error:", e);
+                        setPhotoPreview("");
+                      }}
+                      onLoad={() => {
+                        console.log("Image loaded successfully:", photoPreview);
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4 ios-touch-target">
+                  <button
+                    type="button"
+                    onClick={resetPhotoForm}
+                    className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200 ios-touch-target"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg transition-all hover:from-amber-600 hover:to-orange-600 ios-touch-target"
+                  >
+                    Save Photo
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
