@@ -517,7 +517,9 @@ const AdminDashboard = () => {
       Images:
         (Array.isArray(booking.images) && booking.images.length
           ? booking.images
-          : (booking.image ? [booking.image] : [])) || [],
+          : booking.image
+          ? [booking.image]
+          : []) || [],
     }));
 
     // Helper: convert normal URL to dataURL (may fail due to CORS)
@@ -564,15 +566,34 @@ const AdminDashboard = () => {
     const doc = new jsPDF();
 
     // Title
-    doc.setFontSize(18);
+    doc.setFontSize(20); // Larger title font
     doc.text("Jewellery Bookings Report", 20, 20);
 
-    let y = 30;
+    // Add header image (latest booking) to the PDF header area
+    try {
+      const first = dataWithImages && dataWithImages[0];
+      const headerImg = first?.Images?.[0] || first?.Image;
+      if (headerImg) {
+        const pageWidth = doc.internal.pageSize.getWidth
+          ? doc.internal.pageSize.getWidth()
+          : doc.internal.pageSize.width || 210;
+        const margin = 25; // Match the main margin
+        const size = 25; // header thumbnail size
+        const x = pageWidth - margin - size;
+        const yTop = 12; // align near title line
+        addImageSafe(headerImg, x, yTop, size, size);
+      }
+    } catch (e) {
+      // non-fatal: header image is optional
+      console.warn("Header image add failed:", e);
+    }
+
+    let y = 40; // Increased starting position
     const pageHeight =
       doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-    const margin = 20;
+    const margin = 25; // Increased margin for better spacing
 
-    const addLine = (text, x, lineHeight = 6) => {
+    const addLine = (text, x, lineHeight = 8) => {
       if (y > pageHeight - margin) {
         doc.addPage();
         y = margin;
@@ -597,63 +618,101 @@ const AdminDashboard = () => {
       }
     };
 
-    doc.setFontSize(12);
+    doc.setFontSize(14); // Set font size for details
     dataWithImages.forEach((b, idx) => {
-      // Booking header
-      addLine(`Booking ${idx + 1}`, margin, 8);
-
-      // Images block (support multiple images in rows)
-      const imgHeight = 30;
-      const imgWidth = 30;
-      const gap = 6;
-      const maxPerRow = 4; // adjust as needed
-      const blockXStart = margin;
-      let blockUsed = false;
-      let rowIndex = 0;
-      if (Array.isArray(b.Images) && b.Images.length) {
-        for (let i = 0; i < b.Images.length; i++) {
-          const col = i % maxPerRow;
-          if (col === 0) {
-            // New row: check for page space
-            if (y + imgHeight > pageHeight - margin) {
-              doc.addPage();
-              y = margin;
-            }
-            rowIndex++;
-          }
-          const x = blockXStart + col * (imgWidth + gap);
-          addImageSafe(b.Images[i], x, y, imgWidth, imgHeight);
-          blockUsed = true;
-          // If last col, advance to next row
-          if (col === maxPerRow - 1 || i === b.Images.length - 1) {
-            y += imgHeight + 4;
-          }
-        }
-      } else if (b.Image) {
-        if (y + imgHeight > pageHeight - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        addImageSafe(b.Image, blockXStart, y, imgWidth, imgHeight);
-        blockUsed = true;
-        y += imgHeight + 4;
+      // Check if we need a new page
+      if (y > pageHeight - 60) {
+        // More space for new booking
+        doc.addPage();
+        y = margin;
       }
 
-      const textX = margin; // Text on new line beneath images for clarity
+      // Booking header - BOLD
+      doc.setFont(undefined, "bold");
+      doc.setFontSize(16); // Larger font for booking titles
+      addLine(`BOOKING ${idx + 1}`, margin, 0);
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(12); // Reset to normal font size
+
+      // Images block (support multiple images in rows)
+      const imgHeight = 40;
+      const imgWidth = 40;
+      const gap = 15;
+      const maxPerRow = 3;
+      const blockXStart = margin;
+      let blockUsed = false;
+      let currentY = y;
+
+      if (Array.isArray(b.Images) && b.Images.length) {
+        // Calculate total height needed for images
+        const totalRows = Math.ceil(b.Images.length / maxPerRow);
+        const totalImageHeight = totalRows * (imgHeight + gap) - gap;
+
+        // Check if images fit on current page
+        if (currentY + totalImageHeight > pageHeight - margin) {
+          doc.addPage();
+          currentY = margin;
+        }
+
+        for (let i = 0; i < b.Images.length; i++) {
+          const col = i % maxPerRow;
+          const row = Math.floor(i / maxPerRow);
+
+          if (col === 0 && row > 0) {
+            currentY += imgHeight + gap;
+          }
+
+          const x = blockXStart + col * (imgWidth + gap);
+          addImageSafe(b.Images[i], x, currentY, imgWidth, imgHeight);
+          blockUsed = true;
+        }
+
+        // Move Y position after all images
+        currentY += imgHeight + gap;
+      } else if (b.Image) {
+        // Single image
+        if (currentY + imgHeight > pageHeight - margin) {
+          doc.addPage();
+          currentY = margin;
+        }
+        addImageSafe(b.Image, blockXStart, currentY, imgWidth, imgHeight);
+        currentY += imgHeight + gap;
+        blockUsed = true;
+      }
+
+      // Update main Y position
+      y = Math.max(y, currentY);
+
+      // Text information - always below images
+      const textX = margin;
       const startY = y;
 
+      // Booking details
+      doc.setFontSize(11);
       [
-        ["User", b.Name],
-        ["Category", b.Category],
-        ["Jewellery", b.Jewellery],
-        ["Items", b.Items],
-        ["Grams", b.Grams],
-        ["Date", b.Date],
-        ["Type", b["Multi-Item"]],
-      ].forEach(([k, v]) => addLine(`${k}: ${v}`, textX, 6));
+        [" User", b.Name],
+        ["  Date", b.Date],
+        ["  Jewellery", b.Jewellery],
+        ["  Items", b.Items],
+        ["  Grams", b.Grams],
+        [" Type", b["Multi-Item"]],
+        [" Category", b.Category],
+      ].forEach(([label, value]) => {
+        addLine(`${label}: ${value}`, textX, 7);
+      });
 
-      // Advance y past the text block
-      y = startY + 8;
+      // Add horizontal separator line
+      y += 5; // Small gap before line
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setLineWidth(0.5);
+      const pageWidth = doc.internal.pageSize.getWidth
+        ? doc.internal.pageSize.getWidth()
+        : doc.internal.pageSize.width || 210;
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 15; // Space after separator (15-20px as requested)
     });
 
     // Save PDF
@@ -1217,13 +1276,6 @@ const AdminDashboard = () => {
                       <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="ml-1">Clear All</span>
                     </button>
-                    <button
-                      onClick={handleGenerateGramsPDF}
-                      className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-white bg-blue-600 rounded transition-colors hover:bg-blue-700"
-                    >
-                      <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1">Essential PDF</span>
-                    </button>
                   </div>
                 </div>
                 <div className="p-3 sm:p-6">
@@ -1231,22 +1283,7 @@ const AdminDashboard = () => {
                     {bookings.length ? (
                       <div className="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
                         <div className="px-6 py-4 border-b border-gray-200">
-                          <div className="flex items-center space-x-3">
-                            <img
-                              src={(() => {
-                                const b = bookings && bookings[0];
-                                if (!b) return "https://via.placeholder.com/32x32?text=No";
-                                const img = Array.isArray(b.images) && b.images.length
-                                  ? b.images[0]
-                                  : b.image;
-                                return img || "https://via.placeholder.com/32x32?text=No";
-                              })()}
-                              alt="Latest booking"
-                              className="w-8 h-8 rounded object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = "https://via.placeholder.com/32x32?text=No";
-                              }}
-                            />
+                          <div className="flex justify-between items-center">
                             <h3 className="text-lg font-semibold text-gray-900">
                               User Bookings
                             </h3>
@@ -1260,7 +1297,7 @@ const AdminDashboard = () => {
                                   User
                                 </th>
                                 <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                  Image
+                                  PDF
                                 </th>
                                 <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                   Items
@@ -1320,14 +1357,15 @@ const AdminDashboard = () => {
                                         </div>
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap">
-                                        <img
-                                          src={
-                                            userBookings[0].image ||
-                                            "https://via.placeholder.com/64x64?text=No+Image"
-                                          }
-                                          alt="Jewellery"
-                                          className="object-cover w-16 h-16 rounded-xl"
-                                        />
+                                        <button
+                                          onClick={handleGenerateGramsPDF}
+                                          className="flex items-center px-3 py-2 text-white bg-green-600 rounded-lg shadow-md transition-all hover:bg-green-700 hover:shadow-lg"
+                                        >
+                                          <FileText className="w-4 h-4" />
+                                          <span className="ml-2 text-sm font-medium">
+                                            Essential PDF
+                                          </span>
+                                        </button>
                                       </td>
                                       <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                                         {userBookings.length} item
@@ -1727,8 +1765,8 @@ const AdminDashboard = () => {
       {/* Add Category Modal */}
       {showAddCategoryModal && (
         <div className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl max-h-[75vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-900">
                 Add New Category
               </h3>
@@ -1740,8 +1778,8 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
-              <form onSubmit={handleAddCategory} className="space-y-6">
+            <div className="overflow-y-auto flex-1 p-6 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
+              <form id="addCategoryForm" onSubmit={handleAddCategory} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {/* Name */}
                   <div>
@@ -1797,33 +1835,37 @@ const AdminDashboard = () => {
                     <p className="mb-3 text-sm font-medium text-gray-700">
                       Image Preview:
                     </p>
-                    <div className="overflow-auto max-h-96 rounded-xl border border-gray-200 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
+                    <div className="overflow-auto max-h-64 rounded-xl border border-gray-200 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
                       <img
                         src={categoryImagePreview}
                         alt="Preview"
-                        className="object-contain w-full min-h-48"
+                        className="object-contain w-full min-h-32"
                         onError={() => setCategoryImagePreview("")}
                       />
                     </div>
                   </div>
                 )}
-                {/* Action Buttons */}
-                <div className="flex pt-6 space-x-4">
-                  <button
-                    type="button"
-                    onClick={resetCategoryForm}
-                    className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
-                  >
-                    Save Category
-                  </button>
-                </div>
               </form>
+            </div>
+
+            {/* Action Buttons - Fixed at bottom */}
+            <div className="flex-shrink-0 p-6 pt-4 bg-gray-50 border-t border-gray-200">
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={resetCategoryForm}
+                  className="flex-1 px-6 py-3 font-medium text-gray-700 bg-gray-100 rounded-xl transition-colors hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="addCategoryForm"
+                  className="flex-1 px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
+                >
+                  Save Category
+                </button>
+              </div>
             </div>
           </div>
         </div>
