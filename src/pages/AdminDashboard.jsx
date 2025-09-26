@@ -133,6 +133,21 @@ const AdminDashboard = () => {
     return `${cleanBase}/${clean}`;
   };
 
+  // Fallback default images for categories (used when localStorage is empty or invalid)
+  function getDefaultCategoryImages() {
+    return {
+      Animals: { Default: [asset("/download.jpg")] },
+      "Arabic Style 21k": { Default: [asset("/download (2).jpg")] },
+      Bracelets: { Default: [asset("/images.jpg")] },
+      Pendant: { Default: [asset("/download (1).jpg")] },
+      "Man Collection": { Default: [asset("/images.jpg")] },
+      Rings: { Default: [asset("/download (3).jpg")] },
+      Earrings: { Default: [asset("/images.jpg")] },
+      SET: { Default: [asset("/download (3).jpg")] },
+      Mine: { Default: [asset("/download (2).jpg")] },
+    };
+  }
+
   // Load category images from localStorage or use defaults with error handling
   const [categoryImages, setCategoryImages] = useState(() => {
     try {
