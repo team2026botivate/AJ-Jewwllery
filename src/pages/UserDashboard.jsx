@@ -848,8 +848,12 @@ const UserDashboard = () => {
 
       {/* Main Content */}
       <div
-        className="flex flex-col flex-1 lg:ml-72"
-        style={{ scrollBehavior: "auto" }}
+        className="flex flex-col flex-1 lg:ml-72 ios-footer-fix"
+        style={{
+          scrollBehavior: "auto",
+          minHeight: "100dvh", // Use dynamic viewport height
+          paddingBottom: "5rem" // Account for footer height
+        }}
       >
         {/* Top Bar */}
         <header className="fixed top-0 right-0 left-0 z-30 p-4 border-b border-gray-200 shadow-sm backdrop-blur bg-white/90 md:sticky md:top-0 lg:p-6">

@@ -126,10 +126,25 @@ body {
   }
 }
 
-/* ✅ iOS Safari specific scrollbar fixes */
-.ios-scroll-fix {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+/* ✅ iOS Safari viewport fixes */
+.ios-viewport-fix {
+  /* Prevent viewport jumping when iOS Safari UI changes */
+  min-height: 100dvh;
+  min-height: 100vh; /* Fallback for browsers that don't support dvh */
+
+  /* Account for dynamic viewport changes */
+  height: 100dvh;
+  height: 100vh; /* Fallback */
+}
+
+/* ✅ iOS Safari footer positioning fix */
+.ios-footer-fix {
+  /* Use dynamic viewport height to prevent footer movement */
+  min-height: calc(100dvh - 5rem);
+  min-height: calc(100vh - 5rem); /* Fallback */
+
+  /* Ensure content doesn't get hidden behind footer */
+  padding-bottom: 5rem;
 }
 ::-webkit-scrollbar {
   width: 8px;
@@ -204,7 +219,7 @@ textarea:focus-visible {
   }
 
   .jewelry-input {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200;
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200;
   }
 }
 
